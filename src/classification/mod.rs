@@ -1,6 +1,8 @@
 use ndarray::{Array1, ArrayView1, ArrayView2};
 use std::collections::HashMap;
 
+pub mod linear;
+
 pub trait Classifier {
     fn fit(&mut self, x: ArrayView2<f64>, y: ArrayView1<usize>);
     fn predict(&self, x: ArrayView2<f64>) -> Array1<usize>;
