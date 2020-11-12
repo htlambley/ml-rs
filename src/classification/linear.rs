@@ -36,10 +36,18 @@ impl Classifier for LogisticRegression {
     }
 
     fn predict(&self, x: ArrayView2<f64>) -> Array1<usize> {
-        unimplemented!();
+        if let Some(weights) = &self.weights {
+            // TODO: review threshold
+            x.outer_iter().map(|row| logistic_probability(weights, row).round() as usize).collect::<Array1<usize>>()
+        } else {
+            panic!("LogisticRegression classifier must be fit before usage. Use `classifier.fit(x, y)` before usage.")
+        }
     }
 }
 
+
+/// Calculate the probability that Y = 1 given the data X and weights for a 
+/// logistic regression model.
 fn logistic_probability(weights: &LogisticRegressionWeights, x: ArrayView1<f64>) -> f64 {
     let linear_combination: f64 = weights.bias + weights.weights.dot(&x);
     1.0 / (1.0 + (-linear_combination).exp())
@@ -63,7 +71,8 @@ pub fn log_odds(p: f64) -> f64 {
 
 #[cfg(test)]
 mod test {
-    use super::{logistic_probability, LogisticRegressionWeights};
+    use super::{logistic_probability, LogisticRegression, LogisticRegressionWeights};
+    use super::super::Classifier;   
     use ndarray::array;
     #[test]
     fn test_logistic_probability() {
@@ -73,5 +82,13 @@ mod test {
         };
         let x = array![1.0, 3.0, 1.0];
         assert_eq!(logistic_probability(&w, x.view()), 1.0 / (1.0 + (-9.0f64).exp()));
+    }
+
+    #[test]
+    #[should_panic(expected = "LogisticRegression classifier must be fit before usage. Use `classifier.fit(x, y)` before usage.")]
+    fn test_unfit_logistic_regression() {
+        let clf = LogisticRegression::new();
+        let x = array![[1.0, 2.0], [3.0, 4.0]];
+        clf.predict(x.view());
     }
 }
