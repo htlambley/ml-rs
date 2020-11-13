@@ -1,5 +1,18 @@
 use ndarray::ArrayView1;
 
+/// Calculate the accuracy of an array of predictions `y_pred` from a 
+/// classifier against the true values given in `y_true`.
+///
+/// The **accuracy** of a classifier is the percentage of labels that are
+/// correct in the prediction array `y_pred`. It lies in [0, 1], with 1 
+/// representing perfect accuracy.
+///
+/// # Arguments
+/// `y_true` - a view to a 1D array containing the true labels for the samples
+/// `y_pred` - a view to a 1D array containing the predicted labels (as 
+/// generated, for example, through `classifier.predict()`).
+/// 
+/// `y_true` and `y_pred` must have the same length. 
 pub fn accuracy_score(y_true: ArrayView1<usize>, y_pred: ArrayView1<usize>) -> f64 {
     let len_y_true = y_true.len();
     let len_y_pred = y_pred.len();

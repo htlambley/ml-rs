@@ -8,6 +8,21 @@ pub trait Classifier {
     fn predict(&self, x: ArrayView2<f64>) -> Array1<usize>;
 }
 
+/// A trivial classifier that is initialised with a class label and outputs
+/// that label for any sample it is given.
+///
+/// This may be useful to demonstrate the performance of the most naive
+/// models, which in the case of highly imbalanced classes may have a "good"
+/// accuracy score. For example, if 95% of your data has class 0, then the
+/// `TrivialClassifier` with class 0 may be expected to be 95% accurate newly
+/// sampled data from that distribution.
+///
+/// The trivial classifier does not require fitting as it does not learn 
+/// from the dataset.
+///
+/// A slightly more advanced version of the `TrivialClassifier` is the 
+/// `MajorityClassifier`, which learns the most common class and outputs
+/// this for every sample.
 #[derive(Clone)]
 pub struct TrivialClassifier {
     class: usize,
@@ -26,6 +41,20 @@ impl Classifier for TrivialClassifier {
     }
 }
 
+/// A classifier which learns the most common class and predicts this class
+/// for all unseen data.
+///
+/// # Examples
+/// ```
+/// use ml_rs::classification::{Classifier, MajorityClassifier};
+/// use ndarray::array;
+/// let x = array![[0.], [1.], [2.]];
+/// let y = array![0, 0, 1];
+///
+/// let mut classifier = MajorityClassifier::new();
+/// classifier.fit(x.view(), y.view());
+/// let y_pred = classifier.predict(x.view());
+/// ```
 #[derive(Clone, Default)]
 pub struct MajorityClassifier {
     class: Option<usize>,
