@@ -4,7 +4,7 @@ use std::collections::HashMap;
 pub mod linear;
 
 pub trait Classifier {
-    fn fit(&mut self, x: ArrayView2<f64>, y: ArrayView1<usize>);
+    fn fit<'a>(&mut self, x: ArrayView2<'a, f64>, y: ArrayView1<'a, usize>);
     fn predict(&self, x: ArrayView2<f64>) -> Array1<usize>;
 }
 
