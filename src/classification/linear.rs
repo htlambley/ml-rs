@@ -1,8 +1,8 @@
-use ndarray::{Array1, Axis, ArrayView1, ArrayView2};
+use ndarray::{Array1, Array2, Axis, ArrayView1, ArrayView2};
 use ndarray_rand::RandomExt;
 use ndarray_rand::rand_distr::Uniform;
 use argmin::prelude::*;
-use argmin::solver::gradientdescent::SteepestDescent;
+use argmin::solver::quasinewton::BFGS;
 use argmin::solver::linesearch::MoreThuenteLineSearch;
 use super::Classifier;
 
@@ -22,7 +22,9 @@ use super::Classifier;
 ///
 /// The model is fit using *maximum likelihood estimation* to find the optimal
 /// weights. There is no closed form to find the maximum likelihood estimator
-/// weights so this is solved numerically using gradient descent. 
+/// weights so this is solved numerically using the BFGS optimiser from 
+/// `argmin`, which is a quasi-Newton optimisation method using second-order
+/// derivatives.
 ///
 /// # Configuration
 /// `max_iter` — sets the maximum permitted number of iterations used in 
@@ -60,7 +62,7 @@ impl<'a, 'b> ArgminOp for LogisticRegressionProblem<'a, 'b> {
     type Param = Array1<f64>;
     type Float = f64;
     type Output = f64;
-    type Hessian = ();
+    type Hessian = Array2<f64>;
     type Jacobian = ();
 
     fn apply(&self, p: &Self::Param) -> Result<Self::Output, Error> {
@@ -107,12 +109,14 @@ impl Classifier for LogisticRegression {
             train_y: train_y.view()
         };
 
+        let param_size = x.ncols();
         // Set up a gradient descent using More–Thuente line search.
         let line_search = MoreThuenteLineSearch::new();
-        let solver = SteepestDescent::new(line_search);
+        let init_hessian = Array2::eye(param_size);
+        let solver = BFGS::new(init_hessian, line_search);
         // Generate a random initial point in [-1, 1]^n and hope this is 
         // reasonable.
-        let x_0 = Array1::random(x.ncols(), Uniform::new(-1.0, 1.0));
+        let x_0 = Array1::random(param_size, Uniform::new(-1.0, 1.0));
         let executor = Executor::new(cost, solver, x_0)
             .max_iters(self.max_iter);
         // Execute the optimiser and save the best weights found.
@@ -211,7 +215,7 @@ mod test {
     #[test]
     fn test_fit_logistic_regression_random() {
         let mut clf = LogisticRegression::new();
-        let n_rows = 1000;
+        let n_rows = 2000;
         let n_features = 5;
         let x = Array2::random((n_rows, n_features), Uniform::new(-1.0, 1.0));
         let y = Array1::random(n_rows, Uniform::new(0, 2));
