@@ -58,6 +58,27 @@ struct LogisticRegressionProblem<'a, 'b> {
     train_y: ArrayView1<'b, f64>
 }
 
+/// A numerical approximation of f(x) = log(1 + exp(x)). This suffers from 
+/// numerical errors for moderately large x (e.g. x > 700) as e^700 approaches
+/// the maximum representable f64 value. 
+///
+/// We can try to address this problem using approximations in the limiting 
+/// case. The limit f(x) as x tends to infinity is x, and the limit as it 
+/// tends to negative infinity is e^x.
+///
+/// The issue is explored in greater detail at 
+/// http://sachinashanbhag.blogspot.com/2014/05/numerically-approximation-of-log-1-expy.html
+/// with suggested cutoff values.
+fn approx_log_exp(x: f64) -> f64 {
+    if x > 40. {
+        x
+    } else if x < -10. {
+        x.exp()
+    } else {
+        (1. + x.exp()).ln()
+    }
+}
+
 impl<'a, 'b> ArgminOp for LogisticRegressionProblem<'a, 'b> {
     type Param = Array1<f64>;
     type Float = f64;
@@ -69,8 +90,8 @@ impl<'a, 'b> ArgminOp for LogisticRegressionProblem<'a, 'b> {
         let mut sum = 0.0;
         for (x_i, y_i) in self.train_x.outer_iter().zip(self.train_y.iter()) {
             let linear_combination = p.dot(&x_i);
-            sum += y_i * linear_combination - (1.0 + linear_combination.exp()).ln();
-        }   
+            sum += y_i * linear_combination - approx_log_exp(linear_combination);
+        }
         Ok(-sum)
     }
 
@@ -226,6 +247,16 @@ mod test {
     fn test_fit_logistic_regression_random() {
         let mut clf = LogisticRegression::new();
         let n_rows = 2000;
+        let n_features = 5;
+        let x = Array2::random((n_rows, n_features), Uniform::new(-1.0, 1.0));
+        let y = Array1::random(n_rows, Uniform::new(0, 2));
+        clf.fit(x.view(), y.view());
+    }
+
+    #[test]
+    fn test_fit_logistic_regression_random_large() {
+        let mut clf = LogisticRegression::new();
+        let n_rows = 100000;
         let n_features = 5;
         let x = Array2::random((n_rows, n_features), Uniform::new(-1.0, 1.0));
         let y = Array1::random(n_rows, Uniform::new(0, 2));
