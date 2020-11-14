@@ -27,7 +27,7 @@ use super::Classifier;
 /// # Configuration
 /// `max_iter` — sets the maximum permitted number of iterations used in 
 /// gradient descent to find weights. Larger values will typically lead to
-/// better convergence but takes longer. The default is 1000.
+/// better convergence but takes longer. The default is 100.
 ///
 /// # Examples
 /// Fitting a logistic regression classifier and making a prediction.
@@ -75,13 +75,10 @@ impl<'a, 'b> ArgminOp for LogisticRegressionProblem<'a, 'b> {
     fn gradient(&self, p: &Self::Param) -> Result<Self::Param, Error> {
         let mut gradient = Array1::zeros(p.len());
         for j in 0..p.len() {
-            let mut sum = 0.0;
-            for i in 0..self.train_x.nrows() {
-                let x_i = self.train_x.index_axis(Axis(0), i);
-                let inner = self.train_y[i] - logistic_probability(p.view(), x_i);
-                sum += inner * x_i[j];
-            }
-            gradient[j] = sum;
+            let logistic_probability_vector: Array1<f64> = self.train_x.outer_iter().map(|x_i| logistic_probability(p.view(), x_i)).collect();
+            let inner =  -logistic_probability_vector + self.train_y;
+            let x_j = self.train_x.index_axis(Axis(1), j);
+            gradient[j] = x_j.dot(&inner);
         }
         Ok(-gradient)
     }
@@ -92,7 +89,7 @@ impl LogisticRegression {
     pub fn new() -> LogisticRegression {
         LogisticRegression {
             weights: None,
-            max_iter: 1000
+            max_iter: 100
         }
     }
 }
@@ -139,7 +136,11 @@ impl Classifier for LogisticRegression {
 /// logistic regression model.
 fn logistic_probability(weights: ArrayView1<f64>, x: ArrayView1<f64>) -> f64 {
     let linear_combination: f64 = weights.dot(&x);
-    1.0 / (1.0 + (-linear_combination).exp())
+    sigmoid(linear_combination)
+}
+
+fn sigmoid(x: f64) -> f64 {
+    1.0 / (1.0 + (-x).exp())
 }
 
 /// Calculates the log-odds of a probability p in (0, 1), defined by 
@@ -210,7 +211,7 @@ mod test {
     #[test]
     fn test_fit_logistic_regression_random() {
         let mut clf = LogisticRegression::new();
-        let n_rows = 200;
+        let n_rows = 1000;
         let n_features = 5;
         let x = Array2::random((n_rows, n_features), Uniform::new(-1.0, 1.0));
         let y = Array1::random(n_rows, Uniform::new(0, 2));
