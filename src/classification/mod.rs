@@ -3,6 +3,8 @@ use std::collections::HashMap;
 
 pub mod linear;
 
+/// Convenience function to verify whether an array of labels can be used
+/// in a binary classifier.
 fn labels_binary(y: ArrayView1<usize>) -> bool {
     for label in y {
         if *label > 1 {
@@ -15,6 +17,36 @@ fn labels_binary(y: ArrayView1<usize>) -> bool {
 pub trait Classifier {
     fn fit<'a>(&mut self, x: ArrayView2<'a, f64>, y: ArrayView1<'a, usize>);
     fn predict(&self, x: ArrayView2<f64>) -> Array1<usize>;
+}
+
+/// A binary classifier that can return calibrated probability estimates in the 
+/// range [0, 1] for a given sample. 
+///
+/// Any classifier that implements the `ProbabilityBinaryClassifier` trait must
+/// also implement the `Classifier` trait. The `predict()` method of the
+/// `Classifier` trait is suitable for use when you only need class predictions
+/// rather than confidence levels.
+///
+/// Many classifiers use some sort of decision threshold, but this trait is
+/// only applied to classifiers where you can treat the returned values
+/// as a probability estimate that has been calibrated in some sense.
+/// For example, support vector machines do not (naturally) return calibrated
+/// probabilities, whereas logistic regression classifiers do.
+///
+/// # Examples
+/// ```no_run
+/// use ml_rs::classification::linear::LogisticRegression;
+/// use ml_rs::classification::{Classifier, ProbabilityBinaryClassifier};
+/// use ndarray::array;
+///
+/// let x = array![[1.0, 2.0], [3.0, 4.0]];
+/// let y = array![0, 1];
+/// let mut clf = LogisticRegression::new();
+/// clf.fit(x.view(), y.view());
+/// let y_prob = clf.predict_probability(x.view());
+/// ```
+pub trait ProbabilityBinaryClassifier: Classifier {
+    fn predict_probability(&self, x: ArrayView2<f64>) -> Array1<f64>;
 }
 
 /// A trivial classifier that is initialised with a class label and outputs

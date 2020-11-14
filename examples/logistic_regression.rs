@@ -1,4 +1,4 @@
-use ml_rs::classification::Classifier;
+use ml_rs::classification::{ProbabilityBinaryClassifier, Classifier};
 use ml_rs::classification::linear::LogisticRegression;
 use ml_rs::metrics::accuracy_score;
 use ml_rs::preprocessing::CsvReader;
@@ -27,4 +27,6 @@ fn main() {
     let y_true = array![0];
     let accuracy = accuracy_score(y_true.view(), y_pred.view());
     assert_eq!(accuracy, 1.0);
+    let y_prob = classifier.predict_probability(x_test.view());
+    println!("{}", y_prob);
 }

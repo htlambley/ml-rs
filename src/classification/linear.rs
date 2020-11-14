@@ -4,7 +4,7 @@ use ndarray_rand::rand_distr::Uniform;
 use argmin::prelude::*;
 use argmin::solver::quasinewton::BFGS;
 use argmin::solver::linesearch::MoreThuenteLineSearch;
-use super::{Classifier, labels_binary};
+use super::{ProbabilityBinaryClassifier, Classifier, labels_binary};
 
 /// A classifier implementing the logistic regression model. Logistic 
 /// regression models can be used for binary classification problems and may
@@ -149,9 +149,17 @@ impl Classifier for LogisticRegression {
     }
 
     fn predict(&self, x: ArrayView2<f64>) -> Array1<usize> {
+        let probabilties = self.predict_probability(x);
+        probabilties.iter().map(|x| (x.round() as usize)).collect()
+    }
+}
+
+impl ProbabilityBinaryClassifier for LogisticRegression {
+    fn predict_probability(&self, x: ArrayView2<f64>) -> Array1<f64> {
+        // TODO: return an iterator so the consumer can map if necessary
         if let Some(weights) = &self.weights {
             // Estimate the probability for each sample, and return 1 if p > 0.5, 0 otherwise.
-            x.outer_iter().map(|row| logistic_probability(weights.view(), row).round() as usize).collect::<Array1<usize>>()
+            x.outer_iter().map(|row| logistic_probability(weights.view(), row)).collect()
         } else {
             panic!("LogisticRegression classifier must be fit before usage. Use `classifier.fit(x, y)` before usage.")
         }
@@ -165,6 +173,8 @@ fn logistic_probability(weights: ArrayView1<f64>, x: ArrayView1<f64>) -> f64 {
     sigmoid(linear_combination)
 }
 
+/// The sigmoid function, also called the logistic function, given by
+/// f(x) = 1 / (1 + exp(-x)).
 fn sigmoid(x: f64) -> f64 {
     1.0 / (1.0 + (-x).exp())
 }
