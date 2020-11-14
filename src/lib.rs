@@ -8,3 +8,4 @@ pub mod classification;
 /// After developing a model, these metrics allow you to evaluate the 
 /// performance and decide whether to refine, reject or accept the model.
 pub mod metrics;
+pub mod preprocessing;
