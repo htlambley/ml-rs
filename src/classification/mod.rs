@@ -3,6 +3,15 @@ use std::collections::HashMap;
 
 pub mod linear;
 
+fn labels_binary(y: ArrayView1<usize>) -> bool {
+    for label in y {
+        if *label > 1 {
+            return false;
+        }
+    }
+    return true;
+}
+
 pub trait Classifier {
     fn fit<'a>(&mut self, x: ArrayView2<'a, f64>, y: ArrayView1<'a, usize>);
     fn predict(&self, x: ArrayView2<f64>) -> Array1<usize>;

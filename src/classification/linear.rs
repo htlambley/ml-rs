@@ -4,7 +4,7 @@ use ndarray_rand::rand_distr::Uniform;
 use argmin::prelude::*;
 use argmin::solver::quasinewton::BFGS;
 use argmin::solver::linesearch::MoreThuenteLineSearch;
-use super::Classifier;
+use super::{Classifier, labels_binary};
 
 /// A classifier implementing the logistic regression model. Logistic 
 /// regression models can be used for binary classification problems and may
@@ -99,6 +99,7 @@ impl LogisticRegression {
 impl Classifier for LogisticRegression {
     fn fit<'a>(&mut self, x: ArrayView2<'a, f64>, y: ArrayView1<'a, usize>) {
         assert!(x.nrows() == y.len(), "Failed to fit `LogisticRegression` classifier: must have same number of samples in `x` and `y`.");
+        assert!(labels_binary(y), "Labels in `y` must be binary, i.e. in {0, 1}. `LogisticRegression` does not support multi-class problems.");
 
         // Map y to an Array<f64> for convenience when defining the log-
         // likelihood and gradient functions, and define the optimisation 
@@ -201,6 +202,15 @@ mod test {
         let y = array![0, 0, 1, 1];
         clf.fit(x.view(), y.view());
         assert_eq!(array![0, 0, 1, 1], clf.predict(x.view()));
+    }
+
+    #[test]
+    #[should_panic(expected = "Labels in `y` must be binary, i.e. in {0, 1}. `LogisticRegression` does not support multi-class problems.")]
+    fn test_logistic_regression_non_binary_labels() {
+        let mut clf = LogisticRegression::new();
+        let x = array![[1.0, 2.0], [1.0, 3.0], [3.0, 4.0], [3.0, 5.0]];
+        let y = array![0, 0, 1, 2];
+        clf.fit(x.view(), y.view());
     }
 
     #[test]
