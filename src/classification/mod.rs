@@ -5,7 +5,7 @@ pub mod linear;
 
 /// Convenience function to verify whether an array of labels can be used
 /// in a binary classifier.
-fn labels_binary(y: ArrayView1<usize>) -> bool {
+pub fn labels_binary(y: ArrayView1<usize>) -> bool {
     for label in y {
         if *label > 1 {
             return false;
@@ -19,8 +19,8 @@ pub trait Classifier {
     fn predict(&self, x: ArrayView2<f64>) -> Array1<usize>;
 }
 
-/// A binary classifier that can return calibrated probability estimates in the 
-/// range [0, 1] for a given sample. 
+/// A binary classifier that can return calibrated probability estimates in the
+/// range [0, 1] for a given sample.
 ///
 /// Any classifier that implements the `ProbabilityBinaryClassifier` trait must
 /// also implement the `Classifier` trait. The `predict()` method of the
@@ -58,10 +58,10 @@ pub trait ProbabilityBinaryClassifier: Classifier {
 /// `TrivialClassifier` with class 0 may be expected to be 95% accurate newly
 /// sampled data from that distribution.
 ///
-/// The trivial classifier does not require fitting as it does not learn 
+/// The trivial classifier does not require fitting as it does not learn
 /// from the dataset.
 ///
-/// A slightly more advanced version of the `TrivialClassifier` is the 
+/// A slightly more advanced version of the `TrivialClassifier` is the
 /// `MajorityClassifier`, which learns the most common class and outputs
 /// this for every sample.
 #[derive(Clone)]

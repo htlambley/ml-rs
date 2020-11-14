@@ -1,9 +1,9 @@
-use ml_rs::classification::{ProbabilityBinaryClassifier, Classifier};
 use ml_rs::classification::linear::LogisticRegression;
+use ml_rs::classification::{Classifier, ProbabilityBinaryClassifier};
 use ml_rs::metrics::accuracy_score;
 use ml_rs::preprocessing::CsvReader;
+use ndarray::{array, s, Array2, Axis};
 use std::fs::File;
-use ndarray::{array, Axis, Array2, s};
 
 const BASE: &'static str = env!("CARGO_MANIFEST_DIR");
 
