@@ -4,7 +4,15 @@ Machine learning library in Rust built on
 [`argmin`](http://argmin-rs.org/).
 
 ## Features
-- Logistic Regression
+- **Classification**
+  - Logistic Regression
+- **Regression**
+  - Linear Regression (Ordinary Least Squares)
+- **Classification and Regression Metrics**
+  - Accuracy
+  - Precision and recall
+- **Data Preprocessing**
+  - Loading from CSV
 
 ## Supported Platforms & Setup
 Currently, `ml-rs` has been tested on Linux (Debian). To use the library, a 
