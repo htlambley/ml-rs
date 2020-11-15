@@ -1,22 +1,22 @@
 use crate::classification::labels_binary;
 use ndarray::ArrayView1;
 
-/// Calculates the precision and recall of a binary classifier given the true 
+/// Calculates the precision and recall of a binary classifier given the true
 /// and predicted classes for some test data.
 ///
 /// Precision and recall only make sense for **binary classification**
 /// problems, so `y_true` and `y_pred` must contain only labels in {0, 1}.
 /// Class 1 will be regarded as the "positive" class, and class 0 will
 /// be regarded as the "negative" class.
-/// 
+///
 /// # Arguments
 /// `y_true` - the true classes of the data
 /// `y_pred` - the classes predicted by the binary classifier
 ///
 /// # Interpretation
 /// A **true positive** is a case where the classifier has predicted case 1 on
-/// the data, and the true class was indeed 1. A **false positive** is one 
-/// which was predicted to be class 1, but was actually in class 0. True and 
+/// the data, and the true class was indeed 1. A **false positive** is one
+/// which was predicted to be class 1, but was actually in class 0. True and
 /// false negatives are defined likewise.
 ///
 /// The **precision** of a classifier on some data (x_1, y_1), ..., (x_n, y_n)
@@ -32,7 +32,7 @@ use ndarray::ArrayView1;
 /// This also lies in [0, 1] with 1 being the best possible score.
 ///
 /// # Returns
-/// A pair representing the precision and recall respectively. In the 
+/// A pair representing the precision and recall respectively. In the
 /// degenerate case that the classifier makes no positive predictions,
 /// the precision is undefined and `None` will be returned. Likewise,
 /// if there are no positive cases in the data, the recall is undefined

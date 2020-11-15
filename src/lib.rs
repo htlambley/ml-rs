@@ -2,6 +2,7 @@
 /// linear models such as `LogisticRegression`, which performs logistic
 /// regression on the data.
 pub mod classification;
+
 /// A collection of metrics to measure the performance of classification
 /// and regression models.
 ///
@@ -9,3 +10,4 @@ pub mod classification;
 /// performance and decide whether to refine, reject or accept the model.
 pub mod metrics;
 pub mod preprocessing;
+pub mod regression;

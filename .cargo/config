@@ -1,2 +1,2 @@
 [build]
-rustflags = ["-C", "link-args=-lopenblas"]
+rustflags = ["-C", "link-args=-llapacke -lopenblas"]

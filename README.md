@@ -17,7 +17,7 @@ needed. Three options are supported:
 The library has been most thoroughly tested with the OpenBLAS backend. On 
 Debian, to set up OpenBLAS, run:
 ```shell
-apt install libopenblas-base libopenblas-dev
+apt install libopenblas-base libopenblas-dev liblapacke-dev
 ```
 Then, add the following to your binary's `Cargo.toml`:
 ```toml
