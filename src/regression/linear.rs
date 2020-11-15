@@ -92,6 +92,7 @@ mod tests {
     }
 
     #[test]
+    #[should_panic(exepcted = "`LinearRegression` could not be fit: `x` and `y` must have the same number of samples.")]
     fn test_fit_linear_regression_different_lengths() {
         let x = array![[1., 2.], [3., 4.]];
         let y = array![0., 1., 2.];
