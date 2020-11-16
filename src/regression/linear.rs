@@ -11,10 +11,10 @@ use ndarray_linalg::LeastSquaresSvd;
 /// of the form y_i = \alpha_1 x_1 + ... + \alpha_n x_n + \varepsilon_i,
 /// for some random noise \varepsilon_i.
 ///
-/// This model fits a line that minimises the sum of the squares 
+/// This model fits a line that minimises the sum of the squares
 /// (y_i - \hat{y}_i)^2 over the training data. This can be done through
 /// a closed form calculation by forming each x_i as a row in a matrix X
-/// and solving the least squares problem using the singular value 
+/// and solving the least squares problem using the singular value
 /// decomposition of X.
 ///
 /// This model does not currently support an intercept term. For now, add
@@ -35,21 +35,21 @@ use ndarray_linalg::LeastSquaresSvd;
 /// ```
 #[derive(Clone, Default)]
 pub struct LinearRegression {
-    weights: Option<Array1<f64>>
+    weights: Option<Array1<f64>>,
 }
 
 impl LinearRegression {
     pub fn new() -> LinearRegression {
-        LinearRegression {
-            weights: None
-        }
+        LinearRegression { weights: None }
     }
 }
 
 impl Regressor for LinearRegression {
     fn fit<'a>(&mut self, x: ArrayView2<'a, f64>, y: ArrayView1<'a, f64>) {
         assert!(x.nrows() == y.len(), "`LinearRegression` could not be fit: `x` and `y` must have the same number of samples.");
-        let w = x.least_squares(&y).expect("Could not solve least squares problem.");
+        let w = x
+            .least_squares(&y)
+            .expect("Could not solve least squares problem.");
         self.weights = Some(w.solution);
     }
 
@@ -64,11 +64,11 @@ impl Regressor for LinearRegression {
 
 #[cfg(test)]
 mod tests {
-    use super::LinearRegression;
     use super::super::Regressor;
+    use super::LinearRegression;
     use ndarray::{array, Array1, Array2};
-    use ndarray_rand::RandomExt;
     use ndarray_rand::rand_distr::Uniform;
+    use ndarray_rand::RandomExt;
 
     #[test]
     fn test_linear_regression_simple() {
@@ -92,7 +92,9 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(exepcted = "`LinearRegression` could not be fit: `x` and `y` must have the same number of samples.")]
+    #[should_panic(
+        expected = "`LinearRegression` could not be fit: `x` and `y` must have the same number of samples."
+    )]
     fn test_fit_linear_regression_different_lengths() {
         let x = array![[1., 2.], [3., 4.]];
         let y = array![0., 1., 2.];

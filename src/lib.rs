@@ -11,3 +11,4 @@ pub mod classification;
 pub mod metrics;
 pub mod preprocessing;
 pub mod regression;
+pub mod transformation;
