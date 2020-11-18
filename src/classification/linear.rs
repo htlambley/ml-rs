@@ -1,8 +1,9 @@
-use super::{labels_binary, Classifier, ProbabilityBinaryClassifier};
-use argmin::prelude::*;
+use super::{labels_binary, Classifier, Error, ProbabilityBinaryClassifier};
+use argmin::core;
+use argmin::core::{ArgminOp, Executor};
 use argmin::solver::linesearch::MoreThuenteLineSearch;
 use argmin::solver::quasinewton::BFGS;
-use ndarray::{Array1, Array2, ArrayView1, ArrayView2, Axis};
+use ndarray::{Array1, Array2, ArrayView1, ArrayView2};
 use ndarray_rand::rand_distr::Uniform;
 use ndarray_rand::RandomExt;
 
@@ -42,10 +43,10 @@ use ndarray_rand::RandomExt;
 /// let y = array![0, 1];
 ///
 /// let mut clf = LogisticRegression::new();
-/// clf.fit(x.view(), y.view());
+/// clf.fit(x.view(), y.view()).unwrap();
 ///
 /// let x_test = array![[1.0, 2.0, 3.0]];
-/// assert_eq!(clf.predict(x_test.view()), array![0]);
+/// assert_eq!(clf.predict(x_test.view()).unwrap(), array![0]);
 /// ```
 #[derive(Clone)]
 pub struct LogisticRegression {
@@ -86,27 +87,29 @@ impl<'a, 'b> ArgminOp for LogisticRegressionProblem<'a, 'b> {
     type Hessian = Array2<f64>;
     type Jacobian = ();
 
-    fn apply(&self, p: &Self::Param) -> Result<Self::Output, Error> {
-        let mut sum = 0.0;
-        for (x_i, y_i) in self.train_x.outer_iter().zip(self.train_y.iter()) {
-            let linear_combination = p.dot(&x_i);
-            sum += y_i * linear_combination - approx_log_exp(linear_combination);
-        }
-        Ok(-sum)
+    fn apply(&self, w: &Self::Param) -> Result<Self::Output, core::Error> {
+        // The log-likelihood is given by the expression
+        // $$ \ell(w) = \langle y, Xw \rangle - \sum \log(1 + \exp((Xw)_i)). $$
+        // We wish to maximise the log-likelihood, i.e. minimise the negative
+        // log-likelihood.
+
+        let xw = self.train_x.dot(w);
+        let mut log_exp_xw = xw.clone();
+        log_exp_xw.par_mapv_inplace(approx_log_exp);
+        let log_likelihood = self.train_y.dot(&xw) - log_exp_xw.sum();
+        Ok(-log_likelihood)
     }
 
-    fn gradient(&self, p: &Self::Param) -> Result<Self::Param, Error> {
-        let mut gradient = Array1::zeros(p.len());
-        for j in 0..p.len() {
-            let logistic_probability_vector: Array1<f64> = self
-                .train_x
-                .outer_iter()
-                .map(|x_i| logistic_probability(p.view(), x_i))
-                .collect();
-            let inner = -logistic_probability_vector + self.train_y;
-            let x_j = self.train_x.index_axis(Axis(1), j);
-            gradient[j] = x_j.dot(&inner);
-        }
+    fn gradient(&self, w: &Self::Param) -> Result<Self::Param, core::Error> {
+        // The gradient of the log-likelihood is given by the expression
+        // $$ \nabla \ell(w) = X^T(y - \sigma(Xw)). $$
+        // We require the gradient of the negative log-likelihood so we
+        // negate at the end.
+
+        let mut xw = self.train_x.dot(w);
+        xw.par_mapv_inplace(sigmoid);
+        let inner = -xw + self.train_y;
+        let gradient = self.train_x.t().dot(&inner);
         Ok(-gradient)
     }
 }
@@ -120,61 +123,69 @@ impl LogisticRegression {
     }
 }
 
+impl Default for LogisticRegression {
+    fn default() -> LogisticRegression {
+        Self::new()
+    }
+}
+
 impl Classifier for LogisticRegression {
-    fn fit<'a>(&mut self, x: ArrayView2<'a, f64>, y: ArrayView1<'a, usize>) {
-        assert!(x.nrows() == y.len(), "Failed to fit `LogisticRegression` classifier: must have same number of samples in `x` and `y`.");
-        assert!(labels_binary(y), "Labels in `y` must be binary, i.e. in {0, 1}. `LogisticRegression` does not support multi-class problems.");
+    fn fit(&mut self, x: ArrayView2<f64>, y: ArrayView1<usize>) -> Result<(), Error> {
+        if x.nrows() != y.len() || !labels_binary(y) {
+            return Err(Error::InvalidTrainingData);
+        }
 
         // Map y to an Array<f64> for convenience when defining the log-
         // likelihood and gradient functions, and define the optimisation
         // problem.
         let train_y = y.mapv(|x| x as f64);
-        let cost = LogisticRegressionProblem {
-            train_x: x,
-            train_y: train_y.view(),
+        let best_param: Result<Array1<f64>, Error> = {
+            let cost = LogisticRegressionProblem {
+                train_x: x,
+                train_y: train_y.view(),
+            };
+
+            let param_size = x.ncols();
+            // Set up a gradient descent using More–Thuente line search.
+            let line_search = MoreThuenteLineSearch::new();
+            let init_hessian = Array2::eye(param_size);
+            let solver = BFGS::new(init_hessian, line_search);
+            // Generate a random initial point in [-1, 1]^n and hope this is
+            // reasonable.
+            let x_0 = Array1::random(param_size, Uniform::new(-1.0, 1.0));
+            let executor = Executor::new(cost, solver, x_0).max_iters(self.max_iter);
+            // Execute the optimiser and save the best weights found.
+            executor
+                .run()
+                .map(|result| {
+                    let state = result.state;
+                    state.best_param.to_owned()
+                })
+                .map_err(|_| Error::DidNotConverge)
         };
 
-        let param_size = x.ncols();
-        // Set up a gradient descent using More–Thuente line search.
-        let line_search = MoreThuenteLineSearch::new();
-        let init_hessian = Array2::eye(param_size);
-        let solver = BFGS::new(init_hessian, line_search);
-        // Generate a random initial point in [-1, 1]^n and hope this is
-        // reasonable.
-        let x_0 = Array1::random(param_size, Uniform::new(-1.0, 1.0));
-        let executor = Executor::new(cost, solver, x_0).max_iters(self.max_iter);
-        // Execute the optimiser and save the best weights found.
-        // TODO: return a result here rather than unwrapping.
-        let res = executor.run().unwrap();
-        let state = res.state;
-        self.weights = Some(state.best_param);
+        self.weights = Some(best_param?);
+        Ok(())
     }
 
-    fn predict(&self, x: ArrayView2<f64>) -> Array1<usize> {
-        let probabilties = self.predict_probability(x);
-        probabilties.iter().map(|x| (x.round() as usize)).collect()
+    fn predict(&self, x: ArrayView2<f64>) -> Result<Array1<usize>, Error> {
+        let probabilties = self.predict_probability(x)?;
+        Ok(probabilties.iter().map(|x| (x.round() as usize)).collect())
     }
 }
 
 impl ProbabilityBinaryClassifier for LogisticRegression {
-    fn predict_probability(&self, x: ArrayView2<f64>) -> Array1<f64> {
+    fn predict_probability(&self, x: ArrayView2<f64>) -> Result<Array1<f64>, Error> {
         // TODO: return an iterator so the consumer can map if necessary
         if let Some(weights) = &self.weights {
             // Estimate the probability for each sample, and return 1 if p > 0.5, 0 otherwise.
-            x.outer_iter()
-                .map(|row| logistic_probability(weights.view(), row))
-                .collect()
+            let mut xw = x.dot(weights);
+            xw.par_mapv_inplace(sigmoid);
+            Ok(xw)
         } else {
-            panic!("LogisticRegression classifier must be fit before usage. Use `classifier.fit(x, y)` before usage.")
+            Err(Error::ClassifierNotFit)
         }
     }
-}
-
-/// Calculate the probability that Y = 1 given the data X and weights for a
-/// logistic regression model.
-fn logistic_probability(weights: ArrayView1<f64>, x: ArrayView1<f64>) -> f64 {
-    let linear_combination: f64 = weights.dot(&x);
-    sigmoid(linear_combination)
 }
 
 /// The sigmoid function, also called the logistic function, given by
@@ -183,58 +194,33 @@ fn sigmoid(x: f64) -> f64 {
     1.0 / (1.0 + (-x).exp())
 }
 
-/// Calculates the log-odds of a probability p in (0, 1), defined by
-/// log(p/(1 - p)).
-///
-/// # Arguments
-/// `p` - a probability value that must satisfy 0 < p < 1.
-///
-/// # Examples
-/// ```
-/// use ml_rs::classification::linear::log_odds;
-/// let p = 0.5;
-/// assert_eq!(log_odds(p), 0.0);
-/// ```
-pub fn log_odds(p: f64) -> f64 {
-    (p / (1.0 - p)).ln()
-}
-
 #[cfg(test)]
 mod test {
-    use super::super::Classifier;
-    use super::{logistic_probability, LogisticRegression};
+    use super::super::{Classifier, Error};
+    use super::LogisticRegression;
     use ndarray::{array, Array1, Array2};
     use ndarray_rand::rand_distr::Uniform;
     use ndarray_rand::RandomExt;
-    #[test]
-    fn test_logistic_probability() {
-        let weights = array![1.0, 2.0, 1.0];
-        let x = array![1.0, 3.0, 1.0];
-        assert_eq!(
-            logistic_probability(weights.view(), x.view()),
-            1.0 / (1.0 + (-8.0f64).exp())
-        );
-    }
 
     #[test]
-    #[should_panic(
-        expected = "LogisticRegression classifier must be fit before usage. Use `classifier.fit(x, y)` before usage."
-    )]
     fn test_unfit_logistic_regression() {
         let clf = LogisticRegression::new();
         let x = array![[1.0, 2.0], [3.0, 4.0]];
-        clf.predict(x.view());
+        match clf.predict(x.view()) {
+            Err(Error::ClassifierNotFit) => (),
+            _ => panic!("Classifier did not return correct error"),
+        }
     }
 
     #[test]
-    #[should_panic(
-        expected = "Failed to fit `LogisticRegression` classifier: must have same number of samples in `x` and `y`."
-    )]
     fn test_logistic_regression_different_sizes() {
         let mut clf = LogisticRegression::new();
         let x = array![[1.0, 2.0], [3.0, 4.0]];
         let y = array![0];
-        clf.fit(x.view(), y.view());
+        match clf.fit(x.view(), y.view()) {
+            Err(Error::InvalidTrainingData) => (),
+            _ => panic!("Classifier did not return correct error"),
+        }
     }
 
     #[test]
@@ -242,19 +228,19 @@ mod test {
         let mut clf = LogisticRegression::new();
         let x = array![[1.0, 2.0], [1.0, 3.0], [3.0, 4.0], [3.0, 5.0]];
         let y = array![0, 0, 1, 1];
-        clf.fit(x.view(), y.view());
-        assert_eq!(array![0, 0, 1, 1], clf.predict(x.view()));
+        clf.fit(x.view(), y.view()).unwrap();
+        assert_eq!(array![0, 0, 1, 1], clf.predict(x.view()).unwrap());
     }
 
     #[test]
-    #[should_panic(
-        expected = "Labels in `y` must be binary, i.e. in {0, 1}. `LogisticRegression` does not support multi-class problems."
-    )]
     fn test_logistic_regression_non_binary_labels() {
         let mut clf = LogisticRegression::new();
         let x = array![[1.0, 2.0], [1.0, 3.0], [3.0, 4.0], [3.0, 5.0]];
         let y = array![0, 0, 1, 2];
-        clf.fit(x.view(), y.view());
+        match clf.fit(x.view(), y.view()) {
+            Err(Error::InvalidTrainingData) => (),
+            _ => panic!("Classifier did not return correct error"),
+        }
     }
 
     #[test]
@@ -262,8 +248,8 @@ mod test {
         let mut clf = LogisticRegression::new();
         let x = array![[1.0, 2.0, 3.0],];
         let y = array![0];
-        clf.fit(x.view(), y.view());
-        assert_eq!(array![0], clf.predict(x.view()));
+        clf.fit(x.view(), y.view()).unwrap();
+        assert_eq!(array![0], clf.predict(x.view()).unwrap());
     }
 
     #[test]
@@ -273,7 +259,7 @@ mod test {
         let n_features = 5;
         let x = Array2::random((n_rows, n_features), Uniform::new(-1.0, 1.0));
         let y = Array1::random(n_rows, Uniform::new(0, 2));
-        clf.fit(x.view(), y.view());
+        clf.fit(x.view(), y.view()).unwrap();
     }
 
     #[test]
@@ -283,6 +269,6 @@ mod test {
         let n_features = 5;
         let x = Array2::random((n_rows, n_features), Uniform::new(-1.0, 1.0));
         let y = Array1::random(n_rows, Uniform::new(0, 2));
-        clf.fit(x.view(), y.view());
+        clf.fit(x.view(), y.view()).unwrap();
     }
 }

@@ -43,16 +43,16 @@ pub fn precision_recall_score(
 ) -> (Option<f64>, Option<f64>) {
     assert!(y_true.len() == y_pred.len(), "`precision_recall_score` called for label vectors of different lengths. Ensure that `y_true` and `y_pred` have the same length.");
     assert!(
-        y_true.len() > 0,
+        !y_true.is_empty(),
         "`y_true` has no predictions. Ensure that `y_true` does not have length 0."
     );
     assert!(
         labels_binary(y_true),
-        "`y_true` must be an array of binary labels (in {0, 1})."
+        "`y_true` must be an array of binary labels (0 or 1)."
     );
     assert!(
         labels_binary(y_pred),
-        "`y_pred` must be an array of binary labels (in {0, 1})."
+        "`y_pred` must be an array of binary labels (0 or 1)."
     );
 
     // The number of cases that were correctly predicted to be positive
@@ -118,7 +118,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "`y_true` must be an array of binary labels (in {0, 1}).")]
+    #[should_panic(expected = "`y_true` must be an array of binary labels (0 or 1).")]
     fn test_precision_recall_nonbinary_true() {
         let y_true = array![1, 0, 1, 1, 2];
         let y_pred = array![1, 0, 1, 1, 1];
@@ -126,7 +126,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "`y_pred` must be an array of binary labels (in {0, 1}).")]
+    #[should_panic(expected = "`y_pred` must be an array of binary labels (0 or 1).")]
     fn test_precision_recall_nonbinary_pred() {
         let y_true = array![1, 0, 1, 1, 1];
         let y_pred = array![1, 0, 1, 1, 2];

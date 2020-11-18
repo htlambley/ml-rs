@@ -1,4 +1,4 @@
-use super::Regressor;
+use super::{Error, Regressor};
 use ndarray::{Array1, ArrayView1, ArrayView2};
 use ndarray_linalg::LeastSquaresSvd;
 /// Fits a linear model to data using the ordinary least squares method.
@@ -30,8 +30,8 @@ use ndarray_linalg::LeastSquaresSvd;
 /// let x = array![[1.0, 0.0, 0.0], [2.0, 1.0, 2.0], [3.0, 2.0, 1.0]];
 /// let y = array![0.0, 1.0, 2.0];
 /// let mut regressor = LinearRegression::new();
-/// regressor.fit(x.view(), y.view());
-/// let predictions = regressor.predict(x.view());
+/// regressor.fit(x.view(), y.view()).unwrap();
+/// let predictions = regressor.predict(x.view()).unwrap();
 /// ```
 #[derive(Clone, Default)]
 pub struct LinearRegression {
@@ -45,26 +45,29 @@ impl LinearRegression {
 }
 
 impl Regressor for LinearRegression {
-    fn fit<'a>(&mut self, x: ArrayView2<'a, f64>, y: ArrayView1<'a, f64>) {
-        assert!(x.nrows() == y.len(), "`LinearRegression` could not be fit: `x` and `y` must have the same number of samples.");
-        let w = x
-            .least_squares(&y)
-            .expect("Could not solve least squares problem.");
+    fn fit<'a>(&mut self, x: ArrayView2<'a, f64>, y: ArrayView1<'a, f64>) -> Result<(), Error> {
+        if x.nrows() != y.len() {
+            return Err(Error::InvalidTrainingData);
+        }
+
+        // TODO: this is not "did not converge"
+        let w = x.least_squares(&y).map_err(|_| Error::DidNotConverge)?;
         self.weights = Some(w.solution);
+        Ok(())
     }
 
-    fn predict(&self, x: ArrayView2<f64>) -> Array1<f64> {
+    fn predict(&self, x: ArrayView2<f64>) -> Result<Array1<f64>, Error> {
         if let Some(weights) = &self.weights {
-            x.dot(weights)
+            Ok(x.dot(weights))
         } else {
-            panic!("`LinearRegression` must be fit before usage. Call `regressor.fit(x, y)` before attempting to make predictions.");
+            Err(Error::RegressorNotFit)
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::super::Regressor;
+    use super::super::{Error, Regressor};
     use super::LinearRegression;
     use ndarray::{array, Array1, Array2};
     use ndarray_rand::rand_distr::Uniform;
@@ -75,9 +78,9 @@ mod tests {
         let x = array![[1., 2.], [3., 4.]];
         let y = array![0., 1.];
         let mut regressor = LinearRegression::new();
-        regressor.fit(x.view(), y.view());
+        regressor.fit(x.view(), y.view()).unwrap();
         let x_test = array![[2., 3.]];
-        let y_pred = regressor.predict(x_test.view());
+        let y_pred = regressor.predict(x_test.view()).unwrap();
         assert!((y_pred[0] - 0.5).abs() < 1e-5);
     }
 
@@ -88,17 +91,17 @@ mod tests {
         let n_features = 500;
         let x = Array2::random((n_rows, n_features), Uniform::new(-1.0, 1.0));
         let y = Array1::random(n_rows, Uniform::new(0., 2.));
-        regressor.fit(x.view(), y.view());
+        regressor.fit(x.view(), y.view()).unwrap();
     }
 
     #[test]
-    #[should_panic(
-        expected = "`LinearRegression` could not be fit: `x` and `y` must have the same number of samples."
-    )]
     fn test_fit_linear_regression_different_lengths() {
         let x = array![[1., 2.], [3., 4.]];
         let y = array![0., 1., 2.];
         let mut regressor = LinearRegression::new();
-        regressor.fit(x.view(), y.view());
+        match regressor.fit(x.view(), y.view()) {
+            Err(Error::InvalidTrainingData) => {}
+            _ => panic!("Did not receive correct error"),
+        }
     }
 }

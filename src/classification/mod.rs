@@ -11,12 +11,19 @@ pub fn labels_binary(y: ArrayView1<usize>) -> bool {
             return false;
         }
     }
-    return true;
+    true
+}
+
+#[derive(Clone, Debug)]
+pub enum Error {
+    ClassifierNotFit,
+    InvalidTrainingData,
+    DidNotConverge,
 }
 
 pub trait Classifier {
-    fn fit<'a>(&mut self, x: ArrayView2<'a, f64>, y: ArrayView1<'a, usize>);
-    fn predict(&self, x: ArrayView2<f64>) -> Array1<usize>;
+    fn fit<'a>(&mut self, x: ArrayView2<'a, f64>, y: ArrayView1<'a, usize>) -> Result<(), Error>;
+    fn predict(&self, x: ArrayView2<f64>) -> Result<Array1<usize>, Error>;
 }
 
 /// A binary classifier that can return calibrated probability estimates in the
@@ -46,7 +53,7 @@ pub trait Classifier {
 /// let y_prob = clf.predict_probability(x.view());
 /// ```
 pub trait ProbabilityBinaryClassifier: Classifier {
-    fn predict_probability(&self, x: ArrayView2<f64>) -> Array1<f64>;
+    fn predict_probability(&self, x: ArrayView2<f64>) -> Result<Array1<f64>, Error>;
 }
 
 /// A trivial classifier that is initialised with a class label and outputs
@@ -76,9 +83,12 @@ impl TrivialClassifier {
 }
 
 impl Classifier for TrivialClassifier {
-    fn fit(&mut self, _: ArrayView2<f64>, _: ArrayView1<usize>) {}
-    fn predict(&self, x: ArrayView2<f64>) -> Array1<usize> {
-        Array1::ones(x.nrows()) * self.class
+    fn fit(&mut self, _: ArrayView2<f64>, _: ArrayView1<usize>) -> Result<(), Error> {
+        Ok(())
+    }
+
+    fn predict(&self, x: ArrayView2<f64>) -> Result<Array1<usize>, Error> {
+        Ok(Array1::ones(x.nrows()) * self.class)
     }
 }
 
@@ -108,10 +118,12 @@ impl MajorityClassifier {
 }
 
 impl Classifier for MajorityClassifier {
-    fn fit(&mut self, x: ArrayView2<f64>, y: ArrayView1<usize>) {
+    fn fit(&mut self, x: ArrayView2<f64>, y: ArrayView1<usize>) -> Result<(), Error> {
         let x_len = x.nrows();
         let y_len = y.len();
-        assert!(x_len == y_len, "Training features and labels must be of equal length. x has {} rows but y has {} rows.", x_len, y_len);
+        if x_len != y_len {
+            return Err(Error::InvalidTrainingData);
+        }
 
         let mut frequency_map: HashMap<usize, usize> = HashMap::new();
         for class in y {
@@ -129,37 +141,38 @@ impl Classifier for MajorityClassifier {
         }
 
         self.class = Some(max_class);
+        Ok(())
     }
 
-    fn predict(&self, x: ArrayView2<f64>) -> Array1<usize> {
+    fn predict(&self, x: ArrayView2<f64>) -> Result<Array1<usize>, Error> {
         if let Some(class) = self.class {
-            Array1::ones(x.nrows()) * class
+            Ok(Array1::ones(x.nrows()) * class)
         } else {
-            panic!("MajorityClassifier must be fit on data before usage. Use `classifier.fit(x, y)` before trying to predict on data.")
+            Err(Error::ClassifierNotFit)
         }
     }
 }
 
 #[cfg(test)]
 mod test {
-    use super::{Classifier, MajorityClassifier, TrivialClassifier};
+    use super::{Classifier, Error, MajorityClassifier, TrivialClassifier};
     use ndarray::array;
 
     #[test]
     fn test_trivial_classifier_predictions() {
         let clf = TrivialClassifier::new(0);
         let x = array![[1.0, 2.0], [1.0, 3.0]];
-        assert_eq!(clf.predict(x.view()), array![0, 0]);
+        assert_eq!(clf.predict(x.view()).unwrap(), array![0, 0]);
     }
 
     #[test]
-    #[should_panic(
-        expected = "MajorityClassifier must be fit on data before usage. Use `classifier.fit(x, y)` before trying to predict on data."
-    )]
     fn test_majority_classifier_unfit() {
         let clf = MajorityClassifier::new();
         let x = array![[1.0, 2.0], [1.0, 3.0]];
-        clf.predict(x.view());
+        match clf.predict(x.view()) {
+            Err(Error::ClassifierNotFit) => (),
+            _ => panic!("Classifier did not return correct error"),
+        }
     }
 
     #[test]
@@ -169,19 +182,19 @@ mod test {
         let x = array![[1.0, 2.0], [1.0, 3.0], [4.0, 1.0]];
         let y = array![1, 1, 0];
 
-        clf.fit(x.view(), y.view());
-        assert_eq!(clf.predict(x.view()), array![1, 1, 1]);
+        clf.fit(x.view(), y.view()).unwrap();
+        assert_eq!(clf.predict(x.view()).unwrap(), array![1, 1, 1]);
     }
 
     #[test]
-    #[should_panic(
-        expected = "Training features and labels must be of equal length. x has 3 rows but y has 4 rows."
-    )]
     fn test_majority_classifier_differing_sizes() {
         let mut clf = MajorityClassifier::new();
 
         let x = array![[1.0, 2.0], [1.0, 3.0], [4.0, 1.0]];
         let y = array![1, 1, 0, 1];
-        clf.fit(x.view(), y.view());
+        match clf.fit(x.view(), y.view()) {
+            Err(Error::InvalidTrainingData) => (),
+            _ => panic!("Classifier did not return correct error"),
+        }
     }
 }

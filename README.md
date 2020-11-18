@@ -13,6 +13,8 @@ Machine learning library in Rust built on
   - Precision and recall
 - **Data Preprocessing**
   - Loading from CSV
+- **Transformations**
+  - Principal Component Analysis (PCA)
 
 ## Supported Platforms & Setup
 Currently, `ml-rs` has been tested on Linux (Debian). To use the library, a 

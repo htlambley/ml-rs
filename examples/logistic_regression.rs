@@ -18,15 +18,26 @@ fn main() {
     let mut classifier = LogisticRegression::new();
     // The classifier only needs an `ArrayView` as it does not consume the
     // training data, so we pass with .view()
-    classifier.fit(x, y.view());
+    // This returns a result that you should check to ensure the fitting
+    // process worked as expected.
+    classifier.fit(x, y.view()).unwrap();
 
     let x_test = array![[1., 3., 5.]];
+
     // .predict() can take a 2D array, and returns a 1D array with the
     // predictions for each row.
-    let y_pred = classifier.predict(x_test.view());
+    // This also returns a result which should be dealt with appropriately:
+    // if you can, use the ? operator for convenience.
+    let y_pred = classifier.predict(x_test.view()).unwrap();
     let y_true = array![0];
+
+    // We can measure the accuracy of our predictions using accuracy_score,
+    // which returns a value in [0, 1]
     let accuracy = accuracy_score(y_true.view(), y_pred.view());
     assert_eq!(accuracy, 1.0);
-    let y_prob = classifier.predict_probability(x_test.view());
+
+    // Logistic regression can also return calibrated probability estimates
+    // using `predict_probability()`.
+    let y_prob = classifier.predict_probability(x_test.view()).unwrap();
     println!("{}", y_prob);
 }
