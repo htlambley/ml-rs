@@ -1,8 +1,9 @@
 #[warn(missing_docs)]
 
-/// This module contains a variety of classification models to use with numeric
-/// data. Classification tasks aim to construct a model 
-/// $h \colon \mathcal{X} \to \{0, 1, \dots, n - 1\}$ to distinguish between
+/// A variety of supervised classification models to use with numeric data. 
+///
+/// Classification tasks aim to construct a model 
+/// $h \colon \mathcal{X} \to \\{0, 1, \dots, n - 1\\}$ to distinguish between
 /// $n$ classes of data from the data space $\mathcal{X}$, which is typically
 /// $\mathbb{R}^m$. Classification is a *supervised learning* task which 
 /// requires some pre-labelled training data sampled independently from
@@ -38,7 +39,7 @@
 /// formalism which explains why the procedures we use are justified.
 ///
 /// We begin with a data space $\mathcal{X}$, and the corresponding *target 
-/// space* $\mathcal{Y} = \{0, 1, \dots, n - 1\}$. We assume that the data
+/// space* $\mathcal{Y} = \\{0, 1, \dots, n - 1\\}$. We assume that the data
 /// pairs $(x, y) \in \mathcal{X} \times \mathcal{Y}$ emerge frome some
 /// probability disribution $\mathcal{P}$ on $\mathcal{X} \times \mathcal{Y}$,
 /// and that the training data are *independent and identically distributed*
@@ -55,7 +56,7 @@
 /// then
 /// $$ R(h) = \mathbb{E} [ L(h(X), Y) ]. $$
 /// We can estimate the risk over the entire distribution by the *empirical 
-/// risk*, given some training data $T = \{ (X_1, Y_1), \dots, (X_p, Y_p) \}$:
+/// risk*, given some training data $T = \\{ (X_1, Y_1), \dots, (X_p, Y_p) \\}$:
 /// $$R_\mathrm{E}(h; T) = \frac1p \sum_{i = 1}^p L(h(X_i), Y_i).$$
 /// Provided that the training data are indeed i.i.d., the expected value of 
 /// the empirical risk is the (generalisation) risk $R(h)$, so the empirical
@@ -67,7 +68,7 @@
 /// which is a collection of functions which we consider as candidates. The
 /// *empirical risk minimisation* problem is to find the classifier in 
 /// $\mathcal{H}$ that best fits the data:
-/// $$ \text{ERM problem: } \argmin_{h \in \mathcal{H}} R_\mathrm{E}(h; T). $$
+/// $$ \argmin_{h \in \mathcal{H}} R_\mathrm{E}(h; T). $$
 /// 
 /// The above is a standard characterisation of statistical learning theory.
 /// A much broader book on the topic is [2].
@@ -75,15 +76,15 @@
 /// # Models
 /// Currently, this library supports the following models.
 /// ## Trivial Models
-/// - [`TrivialClassifier`](struct.TrivialClassifier.html)
-/// - [`MajorityClassifier`](struct.MajorityClassifier.html)
-/// ## Logistic Regression (in [`linear`](linear/))
+/// - [`TrivialClassifier`]
+/// - [`MajorityClassifier`].   
+/// ## Logistic Regression (in `linear`)
 /// These models currently only support binary classification. They are
 /// appropriate where a linear function of the features would be a good
 /// predictor of the probability of lying in the positive class.
 ///
-/// - [`LogisticRegression`](linear/struct.LogisticRegression.html)
-/// - [`IRLSLogisticRegression`](linear/struct.IRLSLogisticRegression.html).
+/// - [`LogisticRegression`]
+/// - [`IRLSLogisticRegression`].
 /// These classifiers differ only in the algorithm used to fit the model, and
 /// depending on configuration, one may be significantly faster than the other
 /// during the fitting process.
@@ -107,8 +108,35 @@ pub mod classification;
 /// After developing a model, these metrics allow you to evaluate the
 /// performance and decide whether to refine, reject or accept the model.
 pub mod metrics;
+/// Utilities including loading data from CSV files to arrays to input into
+/// models.
 pub mod preprocessing;
+/// Models to predict continuous variables from data. 
 pub mod regression;
+/// Procedures to perform scaling, dimensionality reduction and other 
+/// transformations on the data before input into a model.
+///
+/// # Details
+/// Transformers in this library can be regarded as various maps on data
+/// matrices in $\mathcal{X}^n$. A transformer $T$ is generally a function
+/// $$T \colon \mathcal{X}^n \to \mathcal{Z}^n$$,
+/// where $\mathcal{Z}$ is some other data space that we transform to.
+///
+/// A *dimensionality reduction* transformer is a transformation where
+/// $\mathcal{X} = \mathbb{R}^m$, and $\mathcal{Z} = \mathbb{R}^p$, with
+/// $p < m$. We could perform trivial dimensionality reduction by deleting
+/// certain components of each sample vector, or we could perform a more
+/// nuanced transformation. Among the most famous dimensionality reduction
+/// procedures is *principal component analysis* as proposed by Pearson (1901).
+/// This is implemented in ml-rs as [`PrincipalComponentAnalysis`]. 
+///
+/// # Prior Art
+/// The idea of a common API for classification, regression and transformation
+/// is used to great success in scikit-learn, a Python machine learning library.
+///
+/// # References
+/// Pedregosa et al, *Scikit-learn: Machine Learning in Python*, J. Machine
+/// Learning Research 12, 2011, pp. 2825–2830.
 pub mod transformation;
 
 use thiserror::Error;

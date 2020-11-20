@@ -20,10 +20,12 @@ use ndarray_rand::RandomExt;
 /// for the maximum likelihood estimator using gradient-based methods, this
 /// classifier uses a method known as *iteratively reweighted least squares*.
 ///
-/// Let $X$ be the data matrix with corresponding labels $y$, $w_i$ the $i$th
-/// approxmation for the weights, $p$ the vector with entries
-/// $p_j = p(x_j; w_i)$, $W$ the diagonal matrix with entries
-/// $W_{jj} = p(x_j; w_i)(1 - p(x_j; w_i))$, and $z = Xw_i  + W^{-1} (y - p)$.
+/// Let:
+/// - $X$ be the data matrix with corresponding labels $y$;
+/// - $w_i$ be the $i$th approxmation for the weights;
+/// - $p$ the vector with entries $p_j = p(x_j; w_i)$;
+/// - $W$ the diagonal matrix with entries $W_{jj} = p(x_j; w_i)(1 - p(x_j; w_i))$;
+/// - $z = Xw_i  + W^{-1} (y - p)$.
 ///
 /// The next approximation is given by solving the *weighted least squares*
 /// (WLS) problem

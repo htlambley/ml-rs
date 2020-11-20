@@ -17,7 +17,7 @@ pub fn labels_binary(y: ArrayView1<usize>) -> bool {
     true
 }
 
-/// This trait represents a classifier that can be fit on numeric data and
+/// Represents a classifier that can be fit on numeric data and
 /// outputs a discrete prediction of the correct class.
 ///
 /// A broad variety of models exist for solving binary classification problems.
