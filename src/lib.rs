@@ -1,3 +1,5 @@
+#[warn(missing_docs)]
+
 /// A variety of classification models. The `linear` module includes
 /// linear models such as `LogisticRegression`, which performs logistic
 /// regression on the data.
@@ -23,6 +25,6 @@ pub enum Error {
     InvalidTrainingData,
     #[error("attempted to solve optimisation problem, but the optimiser encountered an error")]
     OptimiserError,
-    #[error("an error occurred during the training process")]
-    TrainingError,
+    #[error("an error occurred during the fitting process")]
+    FittingError,
 }

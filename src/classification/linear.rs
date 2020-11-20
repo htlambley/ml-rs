@@ -41,13 +41,18 @@ use ndarray_rand::RandomExt;
 ///
 /// # References
 /// [1] Hastie et al, *The Elements of Statistical Learning: Data Mining,
-/// Inference and Prediction*, Springer, New York, NY, 2001, pp. 95–100.
+/// Inference and Prediction*, Springer, New York, NY, 2001, 1st ed,
+/// pp. 95–100.
 pub struct IRLSLogisticRegression {
     weights: Option<Array1<f64>>,
+    /// The maximum number of iterations of the iteratively reweighted least
+    /// squares algorithm used when fitting to the data. The default is 10.
     pub max_iter: u64,
 }
 
 impl IRLSLogisticRegression {
+    /// Creates a new `IRLSLogisticRegression` classifier without any weights,
+    /// which may then be trained using `Classifier::fit()`.
     pub fn new() -> IRLSLogisticRegression {
         IRLSLogisticRegression {
             weights: None,
@@ -105,9 +110,10 @@ impl Classifier for IRLSLogisticRegression {
             a.outer_iter_mut()
                 .zip(w_diag.iter())
                 .for_each(|(mut row, w_i)| row.iter_mut().for_each(|el| *el *= w_i));
-            
-            let sol = a.least_squares(&w_sqrt_z)
-                .map_err(|_| Error::TrainingError)?
+
+            let sol = a
+                .least_squares(&w_sqrt_z)
+                .map_err(|_| Error::FittingError)?
                 .solution;
             weights = sol;
         }
@@ -156,11 +162,6 @@ impl ProbabilityBinaryClassifier for IRLSLogisticRegression {
 /// `argmin`, which is a quasi-Newton optimisation method using second-order
 /// derivatives.
 ///
-/// # Configuration
-/// `max_iter` — sets the maximum permitted number of iterations used in
-/// gradient descent to find weights. Larger values will typically lead to
-/// better convergence but takes longer. The default is 100.
-///
 /// # Examples
 /// Fitting a logistic regression classifier and making a prediction.
 /// ```no_run
@@ -180,6 +181,10 @@ impl ProbabilityBinaryClassifier for IRLSLogisticRegression {
 #[derive(Clone)]
 pub struct LogisticRegression {
     weights: Option<Array1<f64>>,
+    /// The maximum number of iterations of the BFGS algorithm to apply
+    /// when fitting to the data. The default is 100. Larger values will
+    /// tend to lead to better fit classifiers, but increase the time needed to
+    /// train.
     pub max_iter: u64,
 }
 
@@ -244,6 +249,8 @@ impl<'a, 'b> ArgminOp for LogisticRegressionProblem<'a, 'b> {
 }
 
 impl LogisticRegression {
+    /// Creates a new `LogisticRegression` classifier which must be fit on the
+    /// data in order to find suitable weights.
     pub fn new() -> LogisticRegression {
         LogisticRegression {
             weights: None,

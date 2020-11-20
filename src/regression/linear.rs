@@ -52,7 +52,7 @@ impl Regressor for LinearRegression {
             return Err(Error::InvalidTrainingData);
         }
 
-        let w = x.least_squares(&y).map_err(|_| Error::TrainingError)?;
+        let w = x.least_squares(&y).map_err(|_| Error::FittingError)?;
         self.weights = Some(w.solution);
         Ok(())
     }
@@ -105,14 +105,14 @@ mod tests {
             _ => panic!("Did not receive correct error"),
         }
     }
-    
+
     #[test]
     fn test_use_linear_regression_before_fit() {
         let x = array![[1., 2.], [3., 4.]];
         let regressor = LinearRegression::new();
         match regressor.predict(x.view()) {
-            Err(Error::UseBeforeFit) => {},
-            _ => panic!("Did not receive correct error")
+            Err(Error::UseBeforeFit) => {}
+            _ => panic!("Did not receive correct error"),
         }
     }
 }

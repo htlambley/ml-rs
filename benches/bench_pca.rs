@@ -12,7 +12,7 @@ fn bench_pca(c: &mut Criterion) {
             let n_rows = 100000;
             let n_features = 50;
             let x = Array2::random((n_rows, n_features), Uniform::new(-1.0, 1.0));
-            pca.fit(x.view());
+            pca.fit(x.view()).unwrap();
         });
     });
 }

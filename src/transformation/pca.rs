@@ -1,4 +1,5 @@
 use super::Transformer;
+use crate::Error;
 use ndarray::{s, Array1, Array2, ArrayView1, ArrayView2, Axis};
 use ndarray_linalg::svd::SVD;
 
@@ -35,12 +36,17 @@ fn subtract_column_means(x: &mut Array2<f64>, means: ArrayView1<f64>) {
 /// let n_dimensions = 2;
 /// let x = array![[1.0, 2.0, 3.0, -1.0, 4.0], [-1.0, 3.0, 5.0, 4.0, 0.0], [0.0, -3.0, 2.0, 1.0, 0.1]];
 /// let mut pca = PrincipalComponentAnalysis::new(n_dimensions);
-/// pca.fit(x.view());
+/// pca.fit(x.view()).unwrap();
 ///
 /// // Test the PCA transformation on some previously unseen data.
 /// let x_new = array![[0.0, -5.0, 3.0, 2.0, 7.0]];
-/// let x_transformed = pca.transform(x_new.view());
+/// let x_transformed = pca.transform(x_new.view()).unwrap();
 /// ```
+///
+/// # References
+/// Hastie et al, *The Elements of Statistical Learning: Data Mining,
+/// Inference and Prediction*, Springer, New York, NY, 2001, 1st ed,
+/// pp. 485–491.
 #[derive(Clone)]
 pub struct PrincipalComponentAnalysis {
     n_components: usize,
@@ -60,7 +66,7 @@ impl PrincipalComponentAnalysis {
 }
 
 impl Transformer for PrincipalComponentAnalysis {
-    fn fit(&mut self, x: ArrayView2<f64>) {
+    fn fit(&mut self, x: ArrayView2<f64>) -> Result<(), Error> {
         let mut x = x.to_owned();
         let means = column_means(x.view());
         subtract_column_means(&mut x, means.view());
@@ -71,9 +77,7 @@ impl Transformer for PrincipalComponentAnalysis {
         // calculate $\Sigma$ and $V^T$.
         // NOTE: ndarray-linalg 0.12.1 has been causing errors calling dgesvd
         // so we have to build with the GitHub main branch of ndarray-linalg.
-        let (_, _, v_t) = x
-            .svd(false, true)
-            .expect("`PrinicpalComponentAnalysis` failed to calculate the SVD.");
+        let (_, _, v_t) = x.svd(false, true).map_err(|_| Error::FittingError)?;
         let v_t = v_t.unwrap();
         let v = v_t.t();
         // Keep only the first `self.n_components` columns of $V$, which are
@@ -81,29 +85,31 @@ impl Transformer for PrincipalComponentAnalysis {
         let v_k = v.slice(s![.., ..self.n_components]);
         self.principal_components = Some(v_k.to_owned());
         self.means = Some(means);
+        Ok(())
     }
 
-    fn transform(&self, x: ArrayView2<f64>) -> Array2<f64> {
+    fn transform(&self, x: ArrayView2<f64>) -> Result<Array2<f64>, Error> {
         let mut x = x.to_owned();
         if let Some(means) = &self.means {
             subtract_column_means(&mut x, means.view());
         } else {
-            panic!("`PrincipalComponentAnalysis` transformer must be fit before transforming. Use `transformer.fit(x)` to fit.");
+            return Err(Error::UseBeforeFit);
         }
 
         if let Some(principal_components) = &self.principal_components {
-            x.dot(principal_components)
+            Ok(x.dot(principal_components))
         } else {
-            panic!("`PrincipalComponentAnalysis` transformer must be fit before transforming. Use `transformer.fit(x)` to fit.");
+            Err(Error::UseBeforeFit)
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::super::Transformer;
     use super::PrincipalComponentAnalysis;
     use super::{column_means, subtract_column_means};
+    use crate::transformation::Transformer;
+    use crate::Error;
     use ndarray::{array, Array2};
     use ndarray_rand::rand_distr::Uniform;
     use ndarray_rand::RandomExt;
@@ -129,9 +135,26 @@ mod tests {
     fn test_fit_pca() {
         let x = array![[1.0, 2.0], [3.0, 1.0], [5.0, 3.0]];
         let mut pca = PrincipalComponentAnalysis::new(2);
-        pca.fit(x.view());
-        let x_transformed = pca.transform(x.view());
+        pca.fit(x.view()).unwrap();
+        let x_transformed = pca.transform(x.view()).unwrap();
         // Test against precomputed values (generated using scikit-learn's PCA)
+        assert_eq!(x_transformed.nrows(), 3);
+        assert_eq!(x_transformed.ncols(), 2);
+        assert!((x_transformed[[0, 0]] - 1.91418405).abs() < 1e-5);
+        assert!((x_transformed[[0, 1]] - 0.5795683).abs() < 1e-5);
+        assert!((x_transformed[[1, 0]] - 0.28978415).abs() < 1e-5);
+        assert!((x_transformed[[1, 1]] + 0.95709203).abs() < 1e-5);
+        assert!((x_transformed[[2, 0]] + 2.2039682).abs() < 1e-5);
+        assert!((x_transformed[[2, 1]] - 0.37752373).abs() < 1e-5);
+    }
+
+    #[test]
+    fn test_pca_fit_transform() {
+        let x = array![[1.0, 2.0], [3.0, 1.0], [5.0, 3.0]];
+        let mut pca = PrincipalComponentAnalysis::new(2);
+        let x_transformed = pca.fit_transform(x.view()).unwrap();
+        // Test using same values as above to ensure `fit_transform`
+        // does as expected.
         assert_eq!(x_transformed.nrows(), 3);
         assert_eq!(x_transformed.ncols(), 2);
         assert!((x_transformed[[0, 0]] - 1.91418405).abs() < 1e-5);
@@ -146,8 +169,8 @@ mod tests {
     fn test_pca_dimensionality_reduction() {
         let mut pca = PrincipalComponentAnalysis::new(1);
         let x = array![[1.0, 4.0], [9.0, 16.0], [25.0, 36.0]];
-        pca.fit(x.view());
-        let x_transformed = pca.transform(x.view());
+        pca.fit(x.view()).unwrap();
+        let x_transformed = pca.transform(x.view()).unwrap();
         assert_eq!(x_transformed.ncols(), 1);
         assert_eq!(x_transformed.nrows(), 3);
         assert!((x_transformed[[0, 0]] - 18.13224251).abs() < 1e-5);
@@ -159,9 +182,9 @@ mod tests {
     fn test_pca_unseen_data() {
         let mut pca = PrincipalComponentAnalysis::new(1);
         let x = array![[1.0, 4.0], [9.0, 16.0], [25.0, 36.0]];
-        pca.fit(x.view());
+        pca.fit(x.view()).unwrap();
         let x_test = array![[3.0, -1.0]];
-        let x_transformed = pca.transform(x_test.view());
+        let x_transformed = pca.transform(x_test.view()).unwrap();
         assert_eq!(x_transformed.ncols(), 1);
         assert_eq!(x_transformed.nrows(), 1);
         assert!((x_transformed[[0, 0]] - 20.91547962).abs() < 1e-5);
@@ -173,16 +196,16 @@ mod tests {
         let n_rows = 10000;
         let n_features = 50;
         let x = Array2::random((n_rows, n_features), Uniform::new(-1.0, 1.0));
-        pca.fit(x.view());
+        pca.fit(x.view()).unwrap();
     }
 
     #[test]
-    #[should_panic(
-        expected = "`PrincipalComponentAnalysis` transformer must be fit before transforming. Use `transformer.fit(x)` to fit."
-    )]
     fn test_pca_unfit() {
         let pca = PrincipalComponentAnalysis::new(1);
         let x = array![[1.0, 0.0]];
-        pca.transform(x.view());
+        match pca.transform(x.view()) {
+            Err(Error::UseBeforeFit) => {}
+            _ => panic!("Incorrect error returned."),
+        }
     }
 }
