@@ -112,7 +112,28 @@ pub mod metrics;
 /// Utilities including loading data from CSV files to arrays to input into
 /// models.
 pub mod preprocessing;
-/// Models to predict continuous variables from data. 
+/// A collection of supervised regression models to predict continuous 
+/// variables from data.
+///
+/// Regression tasks look to construct a regressor 
+/// $h \colon \mathcal{X} \to \mathcal{Y}$, where instead of $\mathcal{Y}$
+/// being a finite set as in classification, we have $\mathcal{Y}$ being a
+/// continuum, e.g. an interval $[a, b]$.
+/// 
+/// # Context
+/// The context is largely the same as in the classification case (and reading
+/// the [`classification`] module documentation should prove helpful). The 
+/// main change is the the space $\mathcal{Y}$ which is now continuous, so some
+/// classification models do not have corresponding regression models, whereas
+/// others (such as least squares regression) find applications in both 
+/// classification and regression.
+///
+/// # Models
+/// Currently, the following regressors are supported. 
+/// ## Linear Regression
+/// These models are appropriate when the target $Y$ is believed to be some
+/// linear function $f(X)$ of the feature vector $X$.
+/// - [`regression::linear::LinearRegression`].
 pub mod regression;
 /// Procedures to perform scaling, dimensionality reduction and other 
 /// transformations on the data before input into a model.
@@ -120,7 +141,7 @@ pub mod regression;
 /// # Details
 /// Transformers in this library can be regarded as various maps on data
 /// matrices in $\mathcal{X}^n$. A transformer $T$ is generally a function
-/// $$T \colon \mathcal{X}^n \to \mathcal{Z}^n$$,
+/// $$T \colon \mathcal{X}^n \to \mathcal{Z}^n,$$
 /// where $\mathcal{Z}$ is some other data space that we transform to.
 ///
 /// A *dimensionality reduction* transformer is a transformation where

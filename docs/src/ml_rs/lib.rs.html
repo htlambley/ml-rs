@@ -191,6 +191,27 @@
 <span id="171">171</span>
 <span id="172">172</span>
 <span id="173">173</span>
+<span id="174">174</span>
+<span id="175">175</span>
+<span id="176">176</span>
+<span id="177">177</span>
+<span id="178">178</span>
+<span id="179">179</span>
+<span id="180">180</span>
+<span id="181">181</span>
+<span id="182">182</span>
+<span id="183">183</span>
+<span id="184">184</span>
+<span id="185">185</span>
+<span id="186">186</span>
+<span id="187">187</span>
+<span id="188">188</span>
+<span id="189">189</span>
+<span id="190">190</span>
+<span id="191">191</span>
+<span id="192">192</span>
+<span id="193">193</span>
+<span id="194">194</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="attribute">#[<span class="ident">warn</span>(<span class="ident">missing_docs</span>)]</span>
 
@@ -306,7 +327,28 @@
 <span class="doccomment">/// Utilities including loading data from CSV files to arrays to input into</span>
 <span class="doccomment">/// models.</span>
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">preprocessing</span>;
-<span class="doccomment">/// Models to predict continuous variables from data. </span>
+<span class="doccomment">/// A collection of supervised regression models to predict continuous </span>
+<span class="doccomment">/// variables from data.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// Regression tasks look to construct a regressor </span>
+<span class="doccomment">/// $h \colon \mathcal{X} \to \mathcal{Y}$, where instead of $\mathcal{Y}$</span>
+<span class="doccomment">/// being a finite set as in classification, we have $\mathcal{Y}$ being a</span>
+<span class="doccomment">/// continuum, e.g. an interval $[a, b]$.</span>
+<span class="doccomment">/// </span>
+<span class="doccomment">/// # Context</span>
+<span class="doccomment">/// The context is largely the same as in the classification case (and reading</span>
+<span class="doccomment">/// the [`classification`] module documentation should prove helpful). The </span>
+<span class="doccomment">/// main change is the the space $\mathcal{Y}$ which is now continuous, so some</span>
+<span class="doccomment">/// classification models do not have corresponding regression models, whereas</span>
+<span class="doccomment">/// others (such as least squares regression) find applications in both </span>
+<span class="doccomment">/// classification and regression.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// # Models</span>
+<span class="doccomment">/// Currently, the following regressors are supported. </span>
+<span class="doccomment">/// ## Linear Regression</span>
+<span class="doccomment">/// These models are appropriate when the target $Y$ is believed to be some</span>
+<span class="doccomment">/// linear function $f(X)$ of the feature vector $X$.</span>
+<span class="doccomment">/// - [`regression::linear::LinearRegression`].</span>
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">regression</span>;
 <span class="doccomment">/// Procedures to perform scaling, dimensionality reduction and other </span>
 <span class="doccomment">/// transformations on the data before input into a model.</span>
@@ -314,7 +356,7 @@
 <span class="doccomment">/// # Details</span>
 <span class="doccomment">/// Transformers in this library can be regarded as various maps on data</span>
 <span class="doccomment">/// matrices in $\mathcal{X}^n$. A transformer $T$ is generally a function</span>
-<span class="doccomment">/// $$T \colon \mathcal{X}^n \to \mathcal{Z}^n$$,</span>
+<span class="doccomment">/// $$T \colon \mathcal{X}^n \to \mathcal{Z}^n,$$</span>
 <span class="doccomment">/// where $\mathcal{Z}$ is some other data space that we transform to.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// A *dimensionality reduction* transformer is a transformation where</span>

@@ -1,5 +1,7 @@
 use ndarray::ArrayView1;
 
+/// Metrics particularly suitable for binary classification problems, such 
+/// as precision, recall and false/true positive rate.
 pub mod binary;
 
 /// Calculate the accuracy of an array of predictions `y_pred` from a

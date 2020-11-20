@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["accuracy_score","Calculate the accuracy of an array of predictions `y_pred` from a classifier against the true values given in `y_true`."]],"mod":[["binary",""]]});
+initSidebarItems({"fn":[["accuracy_score","Calculate the accuracy of an array of predictions `y_pred` from a classifier against the true values given in `y_true`."]],"mod":[["binary","Metrics particularly suitable for binary classification problems, such  as precision, recall and false/true positive rate."]]});

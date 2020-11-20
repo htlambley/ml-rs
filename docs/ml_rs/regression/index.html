@@ -18,7 +18,27 @@
     });
 </script>
 <style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc mod"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../ml_rs/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a><p class='location'>Module regression</p><div class="sidebar-elems"><div class="block items"><ul><li><a href="#modules">Modules</a></li><li><a href="#traits">Traits</a></li></ul></div><p class='location'><a href='../index.html'>ml_rs</a></p><script>window.sidebarCurrent = {name: 'regression', ty: 'mod', relpath: '../'};</script><script defer src="../sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
-                <a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class='fqn'><span class='out-of-band'><span id='render-detail'><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class='inner'>&#x2212;</span>]</a></span><a class='srclink' href='../../src/ml_rs/regression/mod.rs.html#1-20' title='goto source code'>[src]</a></span><span class='in-band'>Module <a href='../index.html'>ml_rs</a>::<wbr><a class="mod" href=''>regression</a></span></h1><div class='docblock'><p>Models to predict continuous variables from data. </p>
+                <a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class='fqn'><span class='out-of-band'><span id='render-detail'><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class='inner'>&#x2212;</span>]</a></span><a class='srclink' href='../../src/ml_rs/regression/mod.rs.html#1-20' title='goto source code'>[src]</a></span><span class='in-band'>Module <a href='../index.html'>ml_rs</a>::<wbr><a class="mod" href=''>regression</a></span></h1><div class='docblock'><p>A collection of supervised regression models to predict continuous 
+variables from data.</p>
+<p>Regression tasks look to construct a regressor 
+$h \colon \mathcal{X} \to \mathcal{Y}$, where instead of $\mathcal{Y}$
+being a finite set as in classification, we have $\mathcal{Y}$ being a
+continuum, e.g. an interval $[a, b]$.</p>
+<h1 id="context" class="section-header"><a href="#context">Context</a></h1>
+<p>The context is largely the same as in the classification case (and reading
+the <a href="../../ml_rs/classification/index.html" title="classification"><code>classification</code></a> module documentation should prove helpful). The 
+main change is the the space $\mathcal{Y}$ which is now continuous, so some
+classification models do not have corresponding regression models, whereas
+others (such as least squares regression) find applications in both 
+classification and regression.</p>
+<h1 id="models" class="section-header"><a href="#models">Models</a></h1>
+<p>Currently, the following regressors are supported. </p>
+<h2 id="linear-regression" class="section-header"><a href="#linear-regression">Linear Regression</a></h2>
+<p>These models are appropriate when the target $Y$ is believed to be some
+linear function $f(X)$ of the feature vector $X$.</p>
+<ul>
+<li><a href="../../ml_rs/regression/linear/struct.LinearRegression.html" title="regression::linear::LinearRegression"><code>regression::linear::LinearRegression</code></a>.</li>
+</ul>
 </div><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
 <table><tr class='module-item'><td><a class="mod" href="linear/index.html" title='ml_rs::regression::linear mod'>linear</a></td><td class='docblock-short'></td></tr></table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
 <table><tr class='module-item'><td><a class="trait" href="trait.Regressor.html" title='ml_rs::regression::Regressor trait'>Regressor</a></td><td class='docblock-short'><p>This trait represents a <em>regression model</em>, used to predict a continuous

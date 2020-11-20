@@ -19,6 +19,7 @@ use std::fs::File;
 /// ```no_run
 /// use std::fs::File;
 /// use ml_rs::preprocessing::CsvReader;
+/// use ndarray::Array2;
 /// // Load the CSV file as a `File`.
 /// let csv_file = File::open("test.csv").unwrap();
 /// // Create a `CsvReader` from the file reference.
