@@ -142,14 +142,32 @@ pub mod transformation;
 
 use thiserror::Error;
 
+/// The main error type which represents an error in a model or transformer.
+/// As there are many commonalities between classifiers, regressors and 
+/// transformers, this general error is returned during the use of any of
+/// these objects.
 #[derive(Clone, Debug, Error)]
 pub enum Error {
+    /// A model or transformer that required fitting was not fit before trying 
+    /// to use (e.g. calling `predict()` before `fit()`).
     #[error("attempted to use before calling `fit()`: try fitting with appropriate training data before usage")]
     UseBeforeFit,
+    /// The training data provided was invalid in some sense. Check the 
+    /// assumptions for the model used. Common problems are:
+    /// - the data matrix `x` and the label array `y` are different lengths
+    /// - the data matrix `x` or label array `y` are empty.
     #[error("provided training data was invalid")]
     InvalidTrainingData,
+    /// The model being used requires an optimisation problem to be solved,
+    /// but when passing the problem to `argmin`, an error occurred.
+    /// This is most likely an internal error that is not caused by the 
+    /// user input: file an issue if this occurs without obvious cause.
     #[error("attempted to solve optimisation problem, but the optimiser encountered an error")]
     OptimiserError,
+    /// The model had an error during the fitting process. Common problems are:
+    /// - the fitting process involved a call to LAPACK which failed.
+    /// 
+    /// This may be an internal error, or a problem on your system.
     #[error("an error occurred during the fitting process")]
     FittingError,
 }

@@ -25,7 +25,7 @@ pub fn labels_binary(y: ArrayView1<usize>) -> bool {
 /// when applying these to a particular problem.
 ///
 /// Models that can also provide probability estimates will implement the
-/// [`ProbabilityBinaryClassifer`] trait as well as this trait.
+/// [`ProbabilityBinaryClassifier`] trait as well as this trait.
 ///
 /// See the module-level documentation for a broad overview of classification
 /// with ml-rs.

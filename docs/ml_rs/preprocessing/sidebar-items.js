@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["CsvReader",""]]});
+initSidebarItems({"struct":[["CsvReader","Loads data from a CSV file to an `Array2<f64>` for use in transformers and models."]]});

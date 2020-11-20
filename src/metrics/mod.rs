@@ -6,7 +6,7 @@ pub mod binary;
 /// classifier against the true values given in `y_true`.
 ///
 /// The **accuracy** of a classifier is the percentage of labels that are
-/// correct in the prediction array `y_pred`. It lies in [0, 1], with 1
+/// correct in the prediction array `y_pred`. It lies in $[0, 1]$, with 1.0
 /// representing perfect accuracy.
 ///
 /// # Arguments

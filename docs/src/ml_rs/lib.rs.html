@@ -173,6 +173,24 @@
 <span id="153">153</span>
 <span id="154">154</span>
 <span id="155">155</span>
+<span id="156">156</span>
+<span id="157">157</span>
+<span id="158">158</span>
+<span id="159">159</span>
+<span id="160">160</span>
+<span id="161">161</span>
+<span id="162">162</span>
+<span id="163">163</span>
+<span id="164">164</span>
+<span id="165">165</span>
+<span id="166">166</span>
+<span id="167">167</span>
+<span id="168">168</span>
+<span id="169">169</span>
+<span id="170">170</span>
+<span id="171">171</span>
+<span id="172">172</span>
+<span id="173">173</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="attribute">#[<span class="ident">warn</span>(<span class="ident">missing_docs</span>)]</span>
 
@@ -318,14 +336,32 @@
 
 <span class="kw">use</span> <span class="ident">thiserror</span>::<span class="ident">Error</span>;
 
+<span class="doccomment">/// The main error type which represents an error in a model or transformer.</span>
+<span class="doccomment">/// As there are many commonalities between classifiers, regressors and </span>
+<span class="doccomment">/// transformers, this general error is returned during the use of any of</span>
+<span class="doccomment">/// these objects.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Error</span>)]</span>
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">Error</span> {
+    <span class="doccomment">/// A model or transformer that required fitting was not fit before trying </span>
+    <span class="doccomment">/// to use (e.g. calling `predict()` before `fit()`).</span>
     <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;attempted to use before calling `fit()`: try fitting with appropriate training data before usage&quot;</span>)]</span>
     <span class="ident">UseBeforeFit</span>,
+    <span class="doccomment">/// The training data provided was invalid in some sense. Check the </span>
+    <span class="doccomment">/// assumptions for the model used. Common problems are:</span>
+    <span class="doccomment">/// - the data matrix `x` and the label array `y` are different lengths</span>
+    <span class="doccomment">/// - the data matrix `x` or label array `y` are empty.</span>
     <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;provided training data was invalid&quot;</span>)]</span>
     <span class="ident">InvalidTrainingData</span>,
+    <span class="doccomment">/// The model being used requires an optimisation problem to be solved,</span>
+    <span class="doccomment">/// but when passing the problem to `argmin`, an error occurred.</span>
+    <span class="doccomment">/// This is most likely an internal error that is not caused by the </span>
+    <span class="doccomment">/// user input: file an issue if this occurs without obvious cause.</span>
     <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;attempted to solve optimisation problem, but the optimiser encountered an error&quot;</span>)]</span>
     <span class="ident">OptimiserError</span>,
+    <span class="doccomment">/// The model had an error during the fitting process. Common problems are:</span>
+    <span class="doccomment">/// - the fitting process involved a call to LAPACK which failed.</span>
+    <span class="doccomment">/// </span>
+    <span class="doccomment">/// This may be an internal error, or a problem on your system.</span>
     <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;an error occurred during the fitting process&quot;</span>)]</span>
     <span class="ident">FittingError</span>,
 }

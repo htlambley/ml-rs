@@ -5,9 +5,9 @@ use ndarray::ArrayView1;
 /// and predicted classes for some test data.
 ///
 /// Precision and recall only make sense for **binary classification**
-/// problems, so `y_true` and `y_pred` must contain only labels in {0, 1}.
-/// Class 1 will be regarded as the "positive" class, and class 0 will
-/// be regarded as the "negative" class.
+/// problems, so `y_true` and `y_pred` must contain only labels in $\\{0, 1\\}$.
+/// The class with label 1 will be regarded as the "positive" class, and the 
+/// class with label 0 will be regarded as the "negative" class.
 ///
 /// # Arguments
 /// `y_true` - the true classes of the data
@@ -19,17 +19,17 @@ use ndarray::ArrayView1;
 /// which was predicted to be class 1, but was actually in class 0. True and
 /// false negatives are defined likewise.
 ///
-/// The **precision** of a classifier on some data (x_1, y_1), ..., (x_n, y_n)
+/// The **precision** of a classifier on some data $(x_1, y_1), \dots, (x_n, y_n)$
 /// is the proportion of positive predictions that were true positives. This
-/// lies in the interval [0, 1]. A perfect classifier should have precision 1,
+/// lies in the interval $[0, 1]$. A perfect classifier should have precision 1.0,
 /// because every positive prediction will be a true positive case. A precision
-/// of 0 means that every positive case predicted by the classifier was actually
+/// of 0.0 means that every positive case predicted by the classifier was actually
 /// a negative case.
 ///
 /// The **recall** of a classifier is the proportion of the positive cases that
 /// the classifier identifies correctly: a recall of 0.5 means that half of the
 /// positive cases in the data are predicted to be positive by the classifier.
-/// This also lies in [0, 1] with 1 being the best possible score.
+/// This also lies in $[0, 1]$ with 1.0 being the best possible score.
 ///
 /// # Returns
 /// A pair representing the precision and recall respectively. In the
