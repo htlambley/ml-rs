@@ -12,3 +12,17 @@ pub mod metrics;
 pub mod preprocessing;
 pub mod regression;
 pub mod transformation;
+
+use thiserror::Error;
+
+#[derive(Clone, Debug, Error)]
+pub enum Error {
+    #[error("attempted to use before calling `fit()`: try fitting with appropriate training data before usage")]
+    UseBeforeFit,
+    #[error("provided training data was invalid")]
+    InvalidTrainingData,
+    #[error("attempted to solve optimisation problem, but the optimiser encountered an error")]
+    OptimiserError,
+    #[error("an error occurred during the training process")]
+    TrainingError,
+}

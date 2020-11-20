@@ -1,5 +1,6 @@
 use ndarray::{Array1, ArrayView1, ArrayView2};
 use std::collections::HashMap;
+use crate::Error;
 
 pub mod linear;
 
@@ -12,13 +13,6 @@ pub fn labels_binary(y: ArrayView1<usize>) -> bool {
         }
     }
     true
-}
-
-#[derive(Clone, Debug)]
-pub enum Error {
-    ClassifierNotFit,
-    InvalidTrainingData,
-    DidNotConverge,
 }
 
 pub trait Classifier {
@@ -148,14 +142,15 @@ impl Classifier for MajorityClassifier {
         if let Some(class) = self.class {
             Ok(Array1::ones(x.nrows()) * class)
         } else {
-            Err(Error::ClassifierNotFit)
+            Err(Error::UseBeforeFit)
         }
     }
 }
 
 #[cfg(test)]
 mod test {
-    use super::{Classifier, Error, MajorityClassifier, TrivialClassifier};
+    use crate::Error;
+    use super::{Classifier, MajorityClassifier, TrivialClassifier};
     use ndarray::array;
 
     #[test]
@@ -170,7 +165,7 @@ mod test {
         let clf = MajorityClassifier::new();
         let x = array![[1.0, 2.0], [1.0, 3.0]];
         match clf.predict(x.view()) {
-            Err(Error::ClassifierNotFit) => (),
+            Err(Error::UseBeforeFit) => (),
             _ => panic!("Classifier did not return correct error"),
         }
     }

@@ -1,4 +1,6 @@
-use super::{Error, Regressor};
+use super::Regressor;
+use crate::Error;
+
 use ndarray::{Array1, ArrayView1, ArrayView2};
 use ndarray_linalg::LeastSquaresSvd;
 /// Fits a linear model to data using the ordinary least squares method.
@@ -46,12 +48,11 @@ impl LinearRegression {
 
 impl Regressor for LinearRegression {
     fn fit<'a>(&mut self, x: ArrayView2<'a, f64>, y: ArrayView1<'a, f64>) -> Result<(), Error> {
-        if x.nrows() != y.len() {
+        if x.nrows() != y.len() || x.nrows() == 0 {
             return Err(Error::InvalidTrainingData);
         }
 
-        // TODO: this is not "did not converge"
-        let w = x.least_squares(&y).map_err(|_| Error::DidNotConverge)?;
+        let w = x.least_squares(&y).map_err(|_| Error::TrainingError)?;
         self.weights = Some(w.solution);
         Ok(())
     }
@@ -60,7 +61,7 @@ impl Regressor for LinearRegression {
         if let Some(weights) = &self.weights {
             Ok(x.dot(weights))
         } else {
-            Err(Error::RegressorNotFit)
+            Err(Error::UseBeforeFit)
         }
     }
 }
@@ -102,6 +103,16 @@ mod tests {
         match regressor.fit(x.view(), y.view()) {
             Err(Error::InvalidTrainingData) => {}
             _ => panic!("Did not receive correct error"),
+        }
+    }
+    
+    #[test]
+    fn test_use_linear_regression_before_fit() {
+        let x = array![[1., 2.], [3., 4.]];
+        let regressor = LinearRegression::new();
+        match regressor.predict(x.view()) {
+            Err(Error::UseBeforeFit) => {},
+            _ => panic!("Did not receive correct error")
         }
     }
 }
