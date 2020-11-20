@@ -30,7 +30,7 @@
 ///   evaluate the performance on some *test data* that is distinct from
 ///   the training data.
 ///
-/// An overview of model selection can be found in [1]. Bibliographic 
+/// An overview of model selection can be found in \[1\]. Bibliographic 
 /// references to the models provided by the library are provided where
 /// appropriate in the documentation of the respective classifier.
 ///
@@ -71,20 +71,21 @@
 /// $$ \argmin_{h \in \mathcal{H}} R_\mathrm{E}(h; T). $$
 /// 
 /// The above is a standard characterisation of statistical learning theory.
-/// A much broader book on the topic is [2].
+/// A much broader book on the topic is \[2\].
 ///
 /// # Models
 /// Currently, this library supports the following models.
 /// ## Trivial Models
-/// - [`TrivialClassifier`]
-/// - [`MajorityClassifier`].   
+/// - [`classification::TrivialClassifier`]
+/// - [`classification::MajorityClassifier`].   
 /// ## Logistic Regression (in `linear`)
 /// These models currently only support binary classification. They are
 /// appropriate where a linear function of the features would be a good
 /// predictor of the probability of lying in the positive class.
 ///
-/// - [`LogisticRegression`]
-/// - [`IRLSLogisticRegression`].
+/// - [`classification::linear::LogisticRegression`]
+/// - [`classification::linear::IRLSLogisticRegression`].
+///
 /// These classifiers differ only in the algorithm used to fit the model, and
 /// depending on configuration, one may be significantly faster than the other
 /// during the fitting process.
@@ -94,11 +95,11 @@
 /// usage examples.
 ///
 /// # References
-/// [1] Hastie et al, *The Elements of Statistical Learning: Data Mining,
+/// \[1\] Hastie et al, *The Elements of Statistical Learning: Data Mining,
 /// Inference and Prediction*, Springer, New York, NY, 2001, 1st ed, 
 /// ch. 7.
 ///
-/// [2] Vapnik, *The Nature of Statistical Learning Theory*, Springer, New
+/// \[2\] Vapnik, *The Nature of Statistical Learning Theory*, Springer, New
 /// York, NY, 1999, 1st ed. 
 pub mod classification;
 
@@ -128,7 +129,7 @@ pub mod regression;
 /// certain components of each sample vector, or we could perform a more
 /// nuanced transformation. Among the most famous dimensionality reduction
 /// procedures is *principal component analysis* as proposed by Pearson (1901).
-/// This is implemented in ml-rs as [`PrincipalComponentAnalysis`]. 
+/// This is implemented in ml-rs as [`transformation::pca::PrincipalComponentAnalysis`]. 
 ///
 /// # Prior Art
 /// The idea of a common API for classification, regression and transformation

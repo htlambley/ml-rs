@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `src/classification/linear.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>linear.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="shortcut icon" href="../../../favicon.ico">  
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `src/classification/linear.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>linear.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
+<link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png">
+<link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png">  
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/katex.min.css" integrity="sha384-9eLZqc9ds8eNjO3TmqPeYcDj8n+Qfa4nuSiGYa6DjLNcv9BtN69ZIulL9+8CqC9Y" crossorigin="anonymous">
 <script src="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/katex.min.js"                  integrity="sha384-K3vbOmF2BtaVai+Qk37uypf7VrgBubhQreNQe9aGsz9lB63dIFiQVlJbr92dw2Lx" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/contrib/auto-render.min.js"    integrity="sha384-kmZOZB5ObwgQnS/DuDg6TScgOiWWBiVt0plIRkZCmE6rDZGrEOQeHM5PcHi+nyqe" crossorigin="anonymous"></script>
@@ -8,7 +10,10 @@
             delimiters: [
                 {left: "$$", right: "$$", display: true},
                 {left: "$", right: "$", display: false},
-            ]
+            ],
+            macros: {
+                '\\argmin': '\\mathrm{arg\\,min}'
+            }
         });
     });
 </script>
@@ -452,6 +457,8 @@
 <span id="437">437</span>
 <span id="438">438</span>
 <span id="439">439</span>
+<span id="440">440</span>
+<span id="441">441</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">labels_binary</span>, <span class="ident">Classifier</span>, <span class="ident">ProbabilityBinaryClassifier</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">Error</span>;
@@ -475,10 +482,12 @@
 <span class="doccomment">/// for the maximum likelihood estimator using gradient-based methods, this</span>
 <span class="doccomment">/// classifier uses a method known as *iteratively reweighted least squares*.</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// Let $X$ be the data matrix with corresponding labels $y$, $w_i$ the $i$th</span>
-<span class="doccomment">/// approxmation for the weights, $p$ the vector with entries</span>
-<span class="doccomment">/// $p_j = p(x_j; w_i)$, $W$ the diagonal matrix with entries</span>
-<span class="doccomment">/// $W_{jj} = p(x_j; w_i)(1 - p(x_j; w_i))$, and $z = Xw_i  + W^{-1} (y - p)$.</span>
+<span class="doccomment">/// Let:</span>
+<span class="doccomment">/// - $X$ be the data matrix with corresponding labels $y$;</span>
+<span class="doccomment">/// - $w_i$ be the $i$th approxmation for the weights;</span>
+<span class="doccomment">/// - $p$ the vector with entries $p_j = p(x_j; w_i)$;</span>
+<span class="doccomment">/// - $W$ the diagonal matrix with entries $W_{jj} = p(x_j; w_i)(1 - p(x_j; w_i))$;</span>
+<span class="doccomment">/// - $z = Xw_i  + W^{-1} (y - p)$.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// The next approximation is given by solving the *weighted least squares*</span>
 <span class="doccomment">/// (WLS) problem</span>
@@ -495,11 +504,11 @@
 <span class="doccomment">/// decompositions.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// # References</span>
-<span class="doccomment">/// [1] Hastie et al, *The Elements of Statistical Learning: Data Mining,</span>
+<span class="doccomment">/// Hastie et al, *The Elements of Statistical Learning: Data Mining,</span>
 <span class="doccomment">/// Inference and Prediction*, Springer, New York, NY, 2001, 1st ed,</span>
 <span class="doccomment">/// pp. 95–100.</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">IRLSLogisticRegression</span> {
-    <span class="ident">weights</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Array1</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;&gt;</span>,
+    <span class="ident">weights</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Array1</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     <span class="doccomment">/// The maximum number of iterations of the iteratively reweighted least</span>
     <span class="doccomment">/// squares algorithm used when fitting to the data. The default is 10.</span>
     <span class="kw">pub</span> <span class="ident">max_iter</span>: <span class="ident">u64</span>,
@@ -508,7 +517,7 @@
 <span class="kw">impl</span> <span class="ident">IRLSLogisticRegression</span> {
     <span class="doccomment">/// Creates a new `IRLSLogisticRegression` classifier without any weights,</span>
     <span class="doccomment">/// which may then be trained using `Classifier::fit()`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() <span class="op">-&gt;</span> <span class="ident">IRLSLogisticRegression</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">IRLSLogisticRegression</span> {
         <span class="ident">IRLSLogisticRegression</span> {
             <span class="ident">weights</span>: <span class="prelude-val">None</span>,
             <span class="ident">max_iter</span>: <span class="number">10</span>,
@@ -517,14 +526,14 @@
 }
 
 <span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">IRLSLogisticRegression</span> {
-    <span class="kw">fn</span> <span class="ident">default</span>() <span class="op">-&gt;</span> <span class="ident">IRLSLogisticRegression</span> {
+    <span class="kw">fn</span> <span class="ident">default</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">IRLSLogisticRegression</span> {
         <span class="self">Self</span>::<span class="ident">new</span>()
     }
 }
 
 <span class="kw">impl</span> <span class="ident">Classifier</span> <span class="kw">for</span> <span class="ident">IRLSLogisticRegression</span> {
-    <span class="kw">fn</span> <span class="ident">fit</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">x</span>: <span class="ident">ArrayView2</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>, <span class="ident">y</span>: <span class="ident">ArrayView1</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="kw">if</span> <span class="ident">x</span>.<span class="ident">nrows</span>() <span class="op">!=</span> <span class="ident">y</span>.<span class="ident">len</span>() <span class="op">||</span> <span class="op">!</span><span class="ident">labels_binary</span>(<span class="ident">y</span>) {
+    <span class="kw">fn</span> <span class="ident">fit</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">x</span>: <span class="ident">ArrayView2</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>, <span class="ident">y</span>: <span class="ident">ArrayView1</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
+        <span class="kw">if</span> <span class="ident">x</span>.<span class="ident">nrows</span>() <span class="op">!</span><span class="op">=</span> <span class="ident">y</span>.<span class="ident">len</span>() <span class="op">|</span><span class="op">|</span> <span class="op">!</span><span class="ident">labels_binary</span>(<span class="ident">y</span>) {
             <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="ident">InvalidTrainingData</span>);
         }
 
@@ -564,7 +573,7 @@
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">a</span> <span class="op">=</span> <span class="ident">x</span>.<span class="ident">into_owned</span>();
             <span class="ident">a</span>.<span class="ident">outer_iter_mut</span>()
                 .<span class="ident">zip</span>(<span class="ident">w_diag</span>.<span class="ident">iter</span>())
-                .<span class="ident">for_each</span>(<span class="op">|</span>(<span class="kw-2">mut</span> <span class="ident">row</span>, <span class="ident">w_i</span>)<span class="op">|</span> <span class="ident">row</span>.<span class="ident">iter_mut</span>().<span class="ident">for_each</span>(<span class="op">|</span><span class="ident">el</span><span class="op">|</span> <span class="kw-2">*</span><span class="ident">el</span> <span class="op">*=</span> <span class="ident">w_i</span>));
+                .<span class="ident">for_each</span>(<span class="op">|</span>(<span class="kw-2">mut</span> <span class="ident">row</span>, <span class="ident">w_i</span>)<span class="op">|</span> <span class="ident">row</span>.<span class="ident">iter_mut</span>().<span class="ident">for_each</span>(<span class="op">|</span><span class="ident">el</span><span class="op">|</span> <span class="kw-2">*</span><span class="ident">el</span> <span class="kw-2">*</span><span class="op">=</span> <span class="ident">w_i</span>));
 
             <span class="kw">let</span> <span class="ident">sol</span> <span class="op">=</span> <span class="ident">a</span>
                 .<span class="ident">least_squares</span>(<span class="kw-2">&amp;</span><span class="ident">w_sqrt_z</span>)
@@ -577,14 +586,14 @@
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="kw">fn</span> <span class="ident">predict</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">x</span>: <span class="ident">ArrayView2</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Array1</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">predict</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">x</span>: <span class="ident">ArrayView2</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Array1</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">probabilties</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">predict_probability</span>(<span class="ident">x</span>)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(<span class="ident">probabilties</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">x</span><span class="op">|</span> (<span class="ident">x</span>.<span class="ident">round</span>() <span class="kw">as</span> <span class="ident">usize</span>)).<span class="ident">collect</span>())
     }
 }
 
 <span class="kw">impl</span> <span class="ident">ProbabilityBinaryClassifier</span> <span class="kw">for</span> <span class="ident">IRLSLogisticRegression</span> {
-    <span class="kw">fn</span> <span class="ident">predict_probability</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">x</span>: <span class="ident">ArrayView2</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Array1</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">predict_probability</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">x</span>: <span class="ident">ArrayView2</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Array1</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="comment">// TODO: return an iterator so the consumer can map if necessary</span>
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">weights</span>) <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">weights</span> {
             <span class="comment">// Estimate the probability for each sample, and return 1 if p &gt; 0.5, 0 otherwise.</span>
@@ -635,7 +644,7 @@
 <span class="doccomment">/// ```</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">LogisticRegression</span> {
-    <span class="ident">weights</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Array1</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;&gt;</span>,
+    <span class="ident">weights</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Array1</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     <span class="doccomment">/// The maximum number of iterations of the BFGS algorithm to apply</span>
     <span class="doccomment">/// when fitting to the data. The default is 100. Larger values will</span>
     <span class="doccomment">/// tend to lead to better fit classifiers, but increase the time needed to</span>
@@ -659,7 +668,7 @@
 <span class="doccomment">/// The issue is explored in greater detail at</span>
 <span class="doccomment">/// http://sachinashanbhag.blogspot.com/2014/05/numerically-approximation-of-log-1-expy.html</span>
 <span class="doccomment">/// with suggested cutoff values.</span>
-<span class="kw">fn</span> <span class="ident">approx_log_exp</span>(<span class="ident">x</span>: <span class="ident">f64</span>) <span class="op">-&gt;</span> <span class="ident">f64</span> {
+<span class="kw">fn</span> <span class="ident">approx_log_exp</span>(<span class="ident">x</span>: <span class="ident">f64</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">f64</span> {
     <span class="kw">if</span> <span class="ident">x</span> <span class="op">&gt;</span> <span class="number">40.</span> {
         <span class="ident">x</span>
     } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">x</span> <span class="op">&lt;</span> <span class="op">-</span><span class="number">10.</span> {
@@ -676,7 +685,7 @@
     <span class="kw">type</span> <span class="ident">Hessian</span> <span class="op">=</span> <span class="ident">Array2</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>;
     <span class="kw">type</span> <span class="ident">Jacobian</span> <span class="op">=</span> ();
 
-    <span class="kw">fn</span> <span class="ident">apply</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">w</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>::<span class="ident">Param</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>::<span class="ident">Output</span>, <span class="ident">core</span>::<span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">apply</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">w</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>::<span class="ident">Param</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>::<span class="ident">Output</span>, <span class="ident">core</span>::<span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="comment">// The log-likelihood is given by the expression</span>
         <span class="comment">// $$ \ell(w) = \langle y, Xw \rangle - \sum \log(1 + \exp((Xw)_i)). $$</span>
         <span class="comment">// We wish to maximise the log-likelihood, i.e. minimise the negative</span>
@@ -689,7 +698,7 @@
         <span class="prelude-val">Ok</span>(<span class="op">-</span><span class="ident">log_likelihood</span>)
     }
 
-    <span class="kw">fn</span> <span class="ident">gradient</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">w</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>::<span class="ident">Param</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>::<span class="ident">Param</span>, <span class="ident">core</span>::<span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">gradient</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">w</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>::<span class="ident">Param</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>::<span class="ident">Param</span>, <span class="ident">core</span>::<span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="comment">// The gradient of the log-likelihood is given by the expression</span>
         <span class="comment">// $$ \nabla \ell(w) = X^T(y - \sigma(Xw)). $$</span>
         <span class="comment">// We require the gradient of the negative log-likelihood so we</span>
@@ -706,7 +715,7 @@
 <span class="kw">impl</span> <span class="ident">LogisticRegression</span> {
     <span class="doccomment">/// Creates a new `LogisticRegression` classifier which must be fit on the</span>
     <span class="doccomment">/// data in order to find suitable weights.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() <span class="op">-&gt;</span> <span class="ident">LogisticRegression</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">LogisticRegression</span> {
         <span class="ident">LogisticRegression</span> {
             <span class="ident">weights</span>: <span class="prelude-val">None</span>,
             <span class="ident">max_iter</span>: <span class="number">100</span>,
@@ -715,14 +724,14 @@
 }
 
 <span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">LogisticRegression</span> {
-    <span class="kw">fn</span> <span class="ident">default</span>() <span class="op">-&gt;</span> <span class="ident">LogisticRegression</span> {
+    <span class="kw">fn</span> <span class="ident">default</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">LogisticRegression</span> {
         <span class="self">Self</span>::<span class="ident">new</span>()
     }
 }
 
 <span class="kw">impl</span> <span class="ident">Classifier</span> <span class="kw">for</span> <span class="ident">LogisticRegression</span> {
-    <span class="kw">fn</span> <span class="ident">fit</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">x</span>: <span class="ident">ArrayView2</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>, <span class="ident">y</span>: <span class="ident">ArrayView1</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="kw">if</span> <span class="ident">x</span>.<span class="ident">nrows</span>() <span class="op">!=</span> <span class="ident">y</span>.<span class="ident">len</span>() <span class="op">||</span> <span class="op">!</span><span class="ident">labels_binary</span>(<span class="ident">y</span>) {
+    <span class="kw">fn</span> <span class="ident">fit</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">x</span>: <span class="ident">ArrayView2</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>, <span class="ident">y</span>: <span class="ident">ArrayView1</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
+        <span class="kw">if</span> <span class="ident">x</span>.<span class="ident">nrows</span>() <span class="op">!</span><span class="op">=</span> <span class="ident">y</span>.<span class="ident">len</span>() <span class="op">|</span><span class="op">|</span> <span class="op">!</span><span class="ident">labels_binary</span>(<span class="ident">y</span>) {
             <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="ident">InvalidTrainingData</span>);
         }
 
@@ -759,14 +768,14 @@
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="kw">fn</span> <span class="ident">predict</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">x</span>: <span class="ident">ArrayView2</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Array1</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">predict</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">x</span>: <span class="ident">ArrayView2</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Array1</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">probabilties</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">predict_probability</span>(<span class="ident">x</span>)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(<span class="ident">probabilties</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">x</span><span class="op">|</span> (<span class="ident">x</span>.<span class="ident">round</span>() <span class="kw">as</span> <span class="ident">usize</span>)).<span class="ident">collect</span>())
     }
 }
 
 <span class="kw">impl</span> <span class="ident">ProbabilityBinaryClassifier</span> <span class="kw">for</span> <span class="ident">LogisticRegression</span> {
-    <span class="kw">fn</span> <span class="ident">predict_probability</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">x</span>: <span class="ident">ArrayView2</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Array1</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">predict_probability</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">x</span>: <span class="ident">ArrayView2</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Array1</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="comment">// TODO: return an iterator so the consumer can map if necessary</span>
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">weights</span>) <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">weights</span> {
             <span class="comment">// Estimate the probability for each sample, and return 1 if p &gt; 0.5, 0 otherwise.</span>
@@ -781,7 +790,7 @@
 
 <span class="doccomment">/// The sigmoid function, also called the logistic function, given by</span>
 <span class="doccomment">/// f(x) = 1 / (1 + exp(-x)).</span>
-<span class="kw">fn</span> <span class="ident">sigmoid</span>(<span class="ident">x</span>: <span class="ident">f64</span>) <span class="op">-&gt;</span> <span class="ident">f64</span> {
+<span class="kw">fn</span> <span class="ident">sigmoid</span>(<span class="ident">x</span>: <span class="ident">f64</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">f64</span> {
     <span class="number">1.0</span> <span class="op">/</span> (<span class="number">1.0</span> <span class="op">+</span> (<span class="op">-</span><span class="ident">x</span>).<span class="ident">exp</span>())
 }
 
@@ -798,8 +807,8 @@
         <span class="kw">let</span> <span class="ident">clf</span> <span class="op">=</span> <span class="ident">LogisticRegression</span>::<span class="ident">new</span>();
         <span class="kw">let</span> <span class="ident">x</span> <span class="op">=</span> <span class="macro">array</span><span class="macro">!</span>[[<span class="number">1.0</span>, <span class="number">2.0</span>], [<span class="number">3.0</span>, <span class="number">4.0</span>]];
         <span class="kw">match</span> <span class="ident">clf</span>.<span class="ident">predict</span>(<span class="ident">x</span>.<span class="ident">view</span>()) {
-            <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="ident">UseBeforeFit</span>) <span class="op">=&gt;</span> (),
-            <span class="kw">_</span> <span class="op">=&gt;</span> <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;Classifier did not return correct error&quot;</span>),
+            <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="ident">UseBeforeFit</span>) <span class="op">=</span><span class="op">&gt;</span> (),
+            <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;Classifier did not return correct error&quot;</span>),
         }
     }
 
@@ -809,8 +818,8 @@
         <span class="kw">let</span> <span class="ident">x</span> <span class="op">=</span> <span class="macro">array</span><span class="macro">!</span>[[<span class="number">1.0</span>, <span class="number">2.0</span>], [<span class="number">3.0</span>, <span class="number">4.0</span>]];
         <span class="kw">let</span> <span class="ident">y</span> <span class="op">=</span> <span class="macro">array</span><span class="macro">!</span>[<span class="number">0</span>];
         <span class="kw">match</span> <span class="ident">clf</span>.<span class="ident">fit</span>(<span class="ident">x</span>.<span class="ident">view</span>(), <span class="ident">y</span>.<span class="ident">view</span>()) {
-            <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="ident">InvalidTrainingData</span>) <span class="op">=&gt;</span> (),
-            <span class="kw">_</span> <span class="op">=&gt;</span> <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;Classifier did not return correct error&quot;</span>),
+            <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="ident">InvalidTrainingData</span>) <span class="op">=</span><span class="op">&gt;</span> (),
+            <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;Classifier did not return correct error&quot;</span>),
         }
     }
 
@@ -838,8 +847,8 @@
         <span class="kw">let</span> <span class="ident">x</span> <span class="op">=</span> <span class="macro">array</span><span class="macro">!</span>[[<span class="number">1.0</span>, <span class="number">2.0</span>], [<span class="number">1.0</span>, <span class="number">3.0</span>], [<span class="number">3.0</span>, <span class="number">4.0</span>], [<span class="number">3.0</span>, <span class="number">5.0</span>]];
         <span class="kw">let</span> <span class="ident">y</span> <span class="op">=</span> <span class="macro">array</span><span class="macro">!</span>[<span class="number">0</span>, <span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>];
         <span class="kw">match</span> <span class="ident">clf</span>.<span class="ident">fit</span>(<span class="ident">x</span>.<span class="ident">view</span>(), <span class="ident">y</span>.<span class="ident">view</span>()) {
-            <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="ident">InvalidTrainingData</span>) <span class="op">=&gt;</span> (),
-            <span class="kw">_</span> <span class="op">=&gt;</span> <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;Classifier did not return correct error&quot;</span>),
+            <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="ident">InvalidTrainingData</span>) <span class="op">=</span><span class="op">&gt;</span> (),
+            <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;Classifier did not return correct error&quot;</span>),
         }
     }
 
@@ -887,8 +896,8 @@
         <span class="kw">let</span> <span class="ident">clf</span> <span class="op">=</span> <span class="ident">IRLSLogisticRegression</span>::<span class="ident">new</span>();
         <span class="kw">let</span> <span class="ident">x</span> <span class="op">=</span> <span class="macro">array</span><span class="macro">!</span>[[<span class="number">1.0</span>, <span class="number">2.0</span>], [<span class="number">3.0</span>, <span class="number">4.0</span>]];
         <span class="kw">match</span> <span class="ident">clf</span>.<span class="ident">predict</span>(<span class="ident">x</span>.<span class="ident">view</span>()) {
-            <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="ident">UseBeforeFit</span>) <span class="op">=&gt;</span> (),
-            <span class="kw">_</span> <span class="op">=&gt;</span> <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;Classifier did not return correct error&quot;</span>),
+            <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="ident">UseBeforeFit</span>) <span class="op">=</span><span class="op">&gt;</span> (),
+            <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;Classifier did not return correct error&quot;</span>),
         }
     }
 }

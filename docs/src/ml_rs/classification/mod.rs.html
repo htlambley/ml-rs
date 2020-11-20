@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `src/classification/mod.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>mod.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="shortcut icon" href="../../../favicon.ico">  
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `src/classification/mod.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>mod.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
+<link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png">
+<link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png">  
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/katex.min.css" integrity="sha384-9eLZqc9ds8eNjO3TmqPeYcDj8n+Qfa4nuSiGYa6DjLNcv9BtN69ZIulL9+8CqC9Y" crossorigin="anonymous">
 <script src="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/katex.min.js"                  integrity="sha384-K3vbOmF2BtaVai+Qk37uypf7VrgBubhQreNQe9aGsz9lB63dIFiQVlJbr92dw2Lx" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/contrib/auto-render.min.js"    integrity="sha384-kmZOZB5ObwgQnS/DuDg6TScgOiWWBiVt0plIRkZCmE6rDZGrEOQeHM5PcHi+nyqe" crossorigin="anonymous"></script>
@@ -8,7 +10,10 @@
             delimiters: [
                 {left: "$$", right: "$$", display: true},
                 {left: "$", right: "$", display: false},
-            ]
+            ],
+            macros: {
+                '\\argmin': '\\mathrm{arg\\,min}'
+            }
         });
     });
 </script>
@@ -319,7 +324,7 @@
 
 <span class="doccomment">/// Convenience function to verify whether an array of labels can be used</span>
 <span class="doccomment">/// in a binary classifier.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">labels_binary</span>(<span class="ident">y</span>: <span class="ident">ArrayView1</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>) <span class="op">-&gt;</span> <span class="ident">bool</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">labels_binary</span>(<span class="ident">y</span>: <span class="ident">ArrayView1</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
     <span class="kw">for</span> <span class="ident">label</span> <span class="kw">in</span> <span class="ident">y</span> {
         <span class="kw">if</span> <span class="kw-2">*</span><span class="ident">label</span> <span class="op">&gt;</span> <span class="number">1</span> {
             <span class="kw">return</span> <span class="bool-val">false</span>;
@@ -328,7 +333,7 @@
     <span class="bool-val">true</span>
 }
 
-<span class="doccomment">/// This trait represents a classifier that can be fit on numeric data and</span>
+<span class="doccomment">/// Represents a classifier that can be fit on numeric data and</span>
 <span class="doccomment">/// outputs a discrete prediction of the correct class.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// A broad variety of models exist for solving binary classification problems.</span>
@@ -336,7 +341,7 @@
 <span class="doccomment">/// when applying these to a particular problem.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// Models that can also provide probability estimates will implement the</span>
-<span class="doccomment">/// `ProbabilityBinaryClassifer` trait as well as this trait.</span>
+<span class="doccomment">/// [`ProbabilityBinaryClassifer`] trait as well as this trait.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// See the module-level documentation for a broad overview of classification</span>
 <span class="doccomment">/// with ml-rs.</span>
@@ -358,7 +363,7 @@
     <span class="doccomment">/// This method returns a result that should be checked before attempting</span>
     <span class="doccomment">/// to make predictions. If fitting was successful, `Ok(())` is returned,</span>
     <span class="doccomment">/// and a corresponding `Error` is returned if a problem occurred.</span>
-    <span class="kw">fn</span> <span class="ident">fit</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">x</span>: <span class="ident">ArrayView2</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">f64</span><span class="op">&gt;</span>, <span class="ident">y</span>: <span class="ident">ArrayView1</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">usize</span><span class="op">&gt;</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span>;
+    <span class="kw">fn</span> <span class="ident">fit</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">x</span>: <span class="ident">ArrayView2</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">f64</span><span class="op">&gt;</span>, <span class="ident">y</span>: <span class="ident">ArrayView1</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">usize</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span>;
     <span class="doccomment">/// Makes a prediction for the sample in each row of the data matrix `x`,</span>
     <span class="doccomment">/// returning the corresponding labels as an `Array1&lt;usize&gt;`.</span>
     <span class="doccomment">///</span>
@@ -394,15 +399,15 @@
     <span class="doccomment">/// let y_pred = classifier.predict(x_test.view()).unwrap();</span>
     <span class="doccomment">/// assert_eq!(y_pred, array![0]);</span>
     <span class="doccomment">/// ```</span>
-    <span class="kw">fn</span> <span class="ident">predict</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">x</span>: <span class="ident">ArrayView2</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Array1</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span>;
+    <span class="kw">fn</span> <span class="ident">predict</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">x</span>: <span class="ident">ArrayView2</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Array1</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span>;
 }
 
 <span class="doccomment">/// A binary classifier that can return calibrated probability estimates in the</span>
 <span class="doccomment">/// range $[0, 1]$ for a given sample.</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// Any classifier that implements the `ProbabilityBinaryClassifier` trait must</span>
-<span class="doccomment">/// also implement the `Classifier` trait. The `predict()` method of the</span>
-<span class="doccomment">/// `Classifier` trait is suitable for use when you only need class predictions</span>
+<span class="doccomment">/// Any classifier that implements the [`ProbabilityBinaryClassifier`] trait must</span>
+<span class="doccomment">/// also implement the [`Classifier`] trait. The `predict()` method of the</span>
+<span class="doccomment">/// [`Classifier`] trait is suitable for use when you only need class predictions</span>
 <span class="doccomment">/// rather than confidence levels.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// Many classifiers use some sort of decision threshold, but this trait is</span>
@@ -441,7 +446,7 @@
     <span class="doccomment">/// assumptions and training data. If the training data are not i.i.d.</span>
     <span class="doccomment">/// or the modelling assumptions are incorrect, you may receive</span>
     <span class="doccomment">/// poor results.</span>
-    <span class="kw">fn</span> <span class="ident">predict_probability</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">x</span>: <span class="ident">ArrayView2</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Array1</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span>;
+    <span class="kw">fn</span> <span class="ident">predict_probability</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">x</span>: <span class="ident">ArrayView2</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Array1</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span>;
 }
 
 <span class="doccomment">/// A trivial classifier that is initialised with a class label and outputs</span>
@@ -457,8 +462,8 @@
 <span class="doccomment">/// from the dataset. The class predicted depends only on the value passed</span>
 <span class="doccomment">/// in `new()`.</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// A slightly more advanced version of the `TrivialClassifier` is the</span>
-<span class="doccomment">/// `MajorityClassifier`, which learns the most common class and outputs</span>
+<span class="doccomment">/// A slightly more advanced version of the [`TrivialClassifier`] is the</span>
+<span class="doccomment">/// [`MajorityClassifier`], which learns the most common class and outputs</span>
 <span class="doccomment">/// this for every sample.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">TrivialClassifier</span> {
@@ -468,17 +473,17 @@
 <span class="kw">impl</span> <span class="ident">TrivialClassifier</span> {
     <span class="doccomment">/// Creates a new `TrivialClassifier` which will always return the class</span>
     <span class="doccomment">/// passed in the argument `class`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">class</span>: <span class="ident">usize</span>) <span class="op">-&gt;</span> <span class="ident">TrivialClassifier</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">class</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">TrivialClassifier</span> {
         <span class="ident">TrivialClassifier</span> { <span class="ident">class</span> }
     }
 }
 
 <span class="kw">impl</span> <span class="ident">Classifier</span> <span class="kw">for</span> <span class="ident">TrivialClassifier</span> {
-    <span class="kw">fn</span> <span class="ident">fit</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="kw">_</span>: <span class="ident">ArrayView2</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>, <span class="kw">_</span>: <span class="ident">ArrayView1</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">fit</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="kw">_</span>: <span class="ident">ArrayView2</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>, <span class="kw">_</span>: <span class="ident">ArrayView1</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="kw">fn</span> <span class="ident">predict</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">x</span>: <span class="ident">ArrayView2</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Array1</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">predict</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">x</span>: <span class="ident">ArrayView2</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Array1</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="prelude-val">Ok</span>(<span class="ident">Array1</span>::<span class="ident">ones</span>(<span class="ident">x</span>.<span class="ident">nrows</span>()) <span class="op">*</span> <span class="self">self</span>.<span class="ident">class</span>)
     }
 }
@@ -495,7 +500,7 @@
 <span class="doccomment">/// This classifier is not intended for use in serious applications, and just</span>
 <span class="doccomment">/// serves as a baseline for a model that does not use any information from the</span>
 <span class="doccomment">/// unseen features at all. If a more advanced model is performing worse than</span>
-<span class="doccomment">/// the `MajorityClassifier`, you should consider whether there are serious</span>
+<span class="doccomment">/// the [`MajorityClassifier`], you should consider whether there are serious</span>
 <span class="doccomment">/// problems in the modelling assumptions for the advanced model that mean that</span>
 <span class="doccomment">/// it cannot even learn this naive rule.</span>
 <span class="doccomment">///</span>
@@ -516,24 +521,24 @@
 }
 
 <span class="kw">impl</span> <span class="ident">MajorityClassifier</span> {
-    <span class="doccomment">/// Creates a new `MajorityClassifier` ready to be fit on the data.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() <span class="op">-&gt;</span> <span class="ident">MajorityClassifier</span> {
+    <span class="doccomment">/// Creates a new [`MajorityClassifier`] ready to be fit on the data.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">MajorityClassifier</span> {
         <span class="ident">MajorityClassifier</span> { <span class="ident">class</span>: <span class="prelude-val">None</span> }
     }
 }
 
 <span class="kw">impl</span> <span class="ident">Classifier</span> <span class="kw">for</span> <span class="ident">MajorityClassifier</span> {
-    <span class="kw">fn</span> <span class="ident">fit</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">x</span>: <span class="ident">ArrayView2</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>, <span class="ident">y</span>: <span class="ident">ArrayView1</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">fit</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">x</span>: <span class="ident">ArrayView2</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>, <span class="ident">y</span>: <span class="ident">ArrayView1</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">x_len</span> <span class="op">=</span> <span class="ident">x</span>.<span class="ident">nrows</span>();
         <span class="kw">let</span> <span class="ident">y_len</span> <span class="op">=</span> <span class="ident">y</span>.<span class="ident">len</span>();
-        <span class="kw">if</span> <span class="ident">x_len</span> <span class="op">!=</span> <span class="ident">y_len</span> {
+        <span class="kw">if</span> <span class="ident">x_len</span> <span class="op">!</span><span class="op">=</span> <span class="ident">y_len</span> {
             <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="ident">InvalidTrainingData</span>);
         }
 
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">frequency_map</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">usize</span>, <span class="ident">usize</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">HashMap</span>::<span class="ident">new</span>();
         <span class="kw">for</span> <span class="ident">class</span> <span class="kw">in</span> <span class="ident">y</span> {
             <span class="kw">let</span> <span class="ident">class_frequency</span> <span class="op">=</span> <span class="ident">frequency_map</span>.<span class="ident">entry</span>(<span class="kw-2">*</span><span class="ident">class</span>).<span class="ident">or_insert</span>(<span class="number">0</span>);
-            <span class="kw-2">*</span><span class="ident">class_frequency</span> <span class="op">+=</span> <span class="number">1</span>;
+            <span class="kw-2">*</span><span class="ident">class_frequency</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
         }
 
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">max_frequency</span> <span class="op">=</span> <span class="number">0</span>;
@@ -549,7 +554,7 @@
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="kw">fn</span> <span class="ident">predict</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">x</span>: <span class="ident">ArrayView2</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Array1</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">predict</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">x</span>: <span class="ident">ArrayView2</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Array1</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">class</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">class</span> {
             <span class="prelude-val">Ok</span>(<span class="ident">Array1</span>::<span class="ident">ones</span>(<span class="ident">x</span>.<span class="ident">nrows</span>()) <span class="op">*</span> <span class="ident">class</span>)
         } <span class="kw">else</span> {
@@ -576,8 +581,8 @@
         <span class="kw">let</span> <span class="ident">clf</span> <span class="op">=</span> <span class="ident">MajorityClassifier</span>::<span class="ident">new</span>();
         <span class="kw">let</span> <span class="ident">x</span> <span class="op">=</span> <span class="macro">array</span><span class="macro">!</span>[[<span class="number">1.0</span>, <span class="number">2.0</span>], [<span class="number">1.0</span>, <span class="number">3.0</span>]];
         <span class="kw">match</span> <span class="ident">clf</span>.<span class="ident">predict</span>(<span class="ident">x</span>.<span class="ident">view</span>()) {
-            <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="ident">UseBeforeFit</span>) <span class="op">=&gt;</span> (),
-            <span class="kw">_</span> <span class="op">=&gt;</span> <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;Classifier did not return correct error&quot;</span>),
+            <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="ident">UseBeforeFit</span>) <span class="op">=</span><span class="op">&gt;</span> (),
+            <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;Classifier did not return correct error&quot;</span>),
         }
     }
 
@@ -599,8 +604,8 @@
         <span class="kw">let</span> <span class="ident">x</span> <span class="op">=</span> <span class="macro">array</span><span class="macro">!</span>[[<span class="number">1.0</span>, <span class="number">2.0</span>], [<span class="number">1.0</span>, <span class="number">3.0</span>], [<span class="number">4.0</span>, <span class="number">1.0</span>]];
         <span class="kw">let</span> <span class="ident">y</span> <span class="op">=</span> <span class="macro">array</span><span class="macro">!</span>[<span class="number">1</span>, <span class="number">1</span>, <span class="number">0</span>, <span class="number">1</span>];
         <span class="kw">match</span> <span class="ident">clf</span>.<span class="ident">fit</span>(<span class="ident">x</span>.<span class="ident">view</span>(), <span class="ident">y</span>.<span class="ident">view</span>()) {
-            <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="ident">InvalidTrainingData</span>) <span class="op">=&gt;</span> (),
-            <span class="kw">_</span> <span class="op">=&gt;</span> <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;Classifier did not return correct error&quot;</span>),
+            <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="ident">InvalidTrainingData</span>) <span class="op">=</span><span class="op">&gt;</span> (),
+            <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;Classifier did not return correct error&quot;</span>),
         }
     }
 }

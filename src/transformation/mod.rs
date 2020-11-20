@@ -1,7 +1,7 @@
 use crate::Error;
 use ndarray::{Array2, ArrayView2};
 
-/// Contains the [`PrincipalComponentAnalysis`] transformer which can perform
+/// Contains the [`pca::PrincipalComponentAnalysis`] transformer which can perform
 /// prinicpal component analysis (PCA) on a data matrix.
 pub mod pca;
 

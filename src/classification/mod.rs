@@ -25,7 +25,7 @@ pub fn labels_binary(y: ArrayView1<usize>) -> bool {
 /// when applying these to a particular problem.
 ///
 /// Models that can also provide probability estimates will implement the
-/// `ProbabilityBinaryClassifer` trait as well as this trait.
+/// [`ProbabilityBinaryClassifer`] trait as well as this trait.
 ///
 /// See the module-level documentation for a broad overview of classification
 /// with ml-rs.
@@ -89,9 +89,9 @@ pub trait Classifier {
 /// A binary classifier that can return calibrated probability estimates in the
 /// range $[0, 1]$ for a given sample.
 ///
-/// Any classifier that implements the `ProbabilityBinaryClassifier` trait must
-/// also implement the `Classifier` trait. The `predict()` method of the
-/// `Classifier` trait is suitable for use when you only need class predictions
+/// Any classifier that implements the [`ProbabilityBinaryClassifier`] trait must
+/// also implement the [`Classifier`] trait. The `predict()` method of the
+/// [`Classifier`] trait is suitable for use when you only need class predictions
 /// rather than confidence levels.
 ///
 /// Many classifiers use some sort of decision threshold, but this trait is
@@ -146,8 +146,8 @@ pub trait ProbabilityBinaryClassifier: Classifier {
 /// from the dataset. The class predicted depends only on the value passed
 /// in `new()`.
 ///
-/// A slightly more advanced version of the `TrivialClassifier` is the
-/// `MajorityClassifier`, which learns the most common class and outputs
+/// A slightly more advanced version of the [`TrivialClassifier`] is the
+/// [`MajorityClassifier`], which learns the most common class and outputs
 /// this for every sample.
 #[derive(Clone)]
 pub struct TrivialClassifier {
@@ -184,7 +184,7 @@ impl Classifier for TrivialClassifier {
 /// This classifier is not intended for use in serious applications, and just
 /// serves as a baseline for a model that does not use any information from the
 /// unseen features at all. If a more advanced model is performing worse than
-/// the `MajorityClassifier`, you should consider whether there are serious
+/// the [`MajorityClassifier`], you should consider whether there are serious
 /// problems in the modelling assumptions for the advanced model that mean that
 /// it cannot even learn this naive rule.
 ///
@@ -205,7 +205,7 @@ pub struct MajorityClassifier {
 }
 
 impl MajorityClassifier {
-    /// Creates a new `MajorityClassifier` ready to be fit on the data.
+    /// Creates a new [`MajorityClassifier`] ready to be fit on the data.
     pub fn new() -> MajorityClassifier {
         MajorityClassifier { class: None }
     }

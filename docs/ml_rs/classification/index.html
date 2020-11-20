@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="API documentation for the Rust `classification` mod in crate `ml_rs`."><meta name="keywords" content="rust, rustlang, rust-lang, classification"><title>ml_rs::classification - Rust</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="shortcut icon" href="../../favicon.ico">  
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="API documentation for the Rust `classification` mod in crate `ml_rs`."><meta name="keywords" content="rust, rustlang, rust-lang, classification"><title>ml_rs::classification - Rust</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+<link rel="alternate icon" type="image/png" href="../../favicon-16x16.png">
+<link rel="alternate icon" type="image/png" href="../../favicon-32x32.png">  
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/katex.min.css" integrity="sha384-9eLZqc9ds8eNjO3TmqPeYcDj8n+Qfa4nuSiGYa6DjLNcv9BtN69ZIulL9+8CqC9Y" crossorigin="anonymous">
 <script src="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/katex.min.js"                  integrity="sha384-K3vbOmF2BtaVai+Qk37uypf7VrgBubhQreNQe9aGsz9lB63dIFiQVlJbr92dw2Lx" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/contrib/auto-render.min.js"    integrity="sha384-kmZOZB5ObwgQnS/DuDg6TScgOiWWBiVt0plIRkZCmE6rDZGrEOQeHM5PcHi+nyqe" crossorigin="anonymous"></script>
@@ -8,14 +10,17 @@
             delimiters: [
                 {left: "$$", right: "$$", display: true},
                 {left: "$", right: "$", display: false},
-            ]
+            ],
+            macros: {
+                '\\argmin': '\\mathrm{arg\\,min}'
+            }
         });
     });
 </script>
 <style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc mod"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../ml_rs/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a><p class='location'>Module classification</p><div class="sidebar-elems"><div class="block items"><ul><li><a href="#modules">Modules</a></li><li><a href="#structs">Structs</a></li><li><a href="#traits">Traits</a></li><li><a href="#functions">Functions</a></li></ul></div><p class='location'><a href='../index.html'>ml_rs</a></p><script>window.sidebarCurrent = {name: 'classification', ty: 'mod', relpath: '../'};</script><script defer src="../sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
-                <a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class='fqn'><span class='out-of-band'><span id='render-detail'><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class='inner'>&#x2212;</span>]</a></span><a class='srclink' href='../../src/ml_rs/classification/mod.rs.html#1-295' title='goto source code'>[src]</a></span><span class='in-band'>Module <a href='../index.html'>ml_rs</a>::<wbr><a class="mod" href=''>classification</a></span></h1><div class='docblock'><p>This module contains a variety of classification models to use with numeric
-data. Classification tasks aim to construct a model 
-$h \colon \mathcal{X} \to {0, 1, \dots, n - 1}$ to distinguish between
+                <a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class='fqn'><span class='out-of-band'><span id='render-detail'><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class='inner'>&#x2212;</span>]</a></span><a class='srclink' href='../../src/ml_rs/classification/mod.rs.html#1-295' title='goto source code'>[src]</a></span><span class='in-band'>Module <a href='../index.html'>ml_rs</a>::<wbr><a class="mod" href=''>classification</a></span></h1><div class='docblock'><p>A variety of supervised classification models to use with numeric data. </p>
+<p>Classification tasks aim to construct a model 
+$h \colon \mathcal{X} \to \{0, 1, \dots, n - 1\}$ to distinguish between
 $n$ classes of data from the data space $\mathcal{X}$, which is typically
 $\mathbb{R}^m$. Classification is a <em>supervised learning</em> task which 
 requires some pre-labelled training data sampled independently from
@@ -48,7 +53,7 @@ appropriate in the documentation of the respective classifier.</p>
 <p>This section can freely be omitted, but provides interesting mathematical 
 formalism which explains why the procedures we use are justified.</p>
 <p>We begin with a data space $\mathcal{X}$, and the corresponding <em>target 
-space</em> $\mathcal{Y} = {0, 1, \dots, n - 1}$. We assume that the data
+space</em> $\mathcal{Y} = \{0, 1, \dots, n - 1\}$. We assume that the data
 pairs $(x, y) \in \mathcal{X} \times \mathcal{Y}$ emerge frome some
 probability disribution $\mathcal{P}$ on $\mathcal{X} \times \mathcal{Y}$,
 and that the training data are <em>independent and identically distributed</em>
@@ -64,7 +69,7 @@ to some <em>loss function</em>, so if $(X, Y)$ are sampled from $\mathcal{P}$,
 then
 $$ R(h) = \mathbb{E} [ L(h(X), Y) ]. $$
 We can estimate the risk over the entire distribution by the <em>empirical 
-risk</em>, given some training data $T = { (X_1, Y_1), \dots, (X_p, Y_p) }$:
+risk</em>, given some training data $T = \{ (X_1, Y_1), \dots, (X_p, Y_p) \}$:
 $$R_\mathrm{E}(h; T) = \frac1p \sum_{i = 1}^p L(h(X_i), Y_i).$$
 Provided that the training data are indeed i.i.d., the expected value of 
 the empirical risk is the (generalisation) risk $R(h)$, so the empirical
@@ -75,27 +80,27 @@ true risk, leading to poor performance on unseen data.</p>
 which is a collection of functions which we consider as candidates. The
 <em>empirical risk minimisation</em> problem is to find the classifier in 
 $\mathcal{H}$ that best fits the data:
-$$ \text{ERM problem: } \argmin_{h \in \mathcal{H}} R_\mathrm{E}(h; T). $$</p>
+$$ \argmin_{h \in \mathcal{H}} R_\mathrm{E}(h; T). $$</p>
 <p>The above is a standard characterisation of statistical learning theory.
 A much broader book on the topic is [2].</p>
 <h1 id="models" class="section-header"><a href="#models">Models</a></h1>
 <p>Currently, this library supports the following models.</p>
 <h2 id="trivial-models" class="section-header"><a href="#trivial-models">Trivial Models</a></h2>
 <ul>
-<li><a href="struct.TrivialClassifier.html"><code>TrivialClassifier</code></a></li>
-<li><a href="struct.MajorityClassifier.html"><code>MajorityClassifier</code></a></li>
+<li><a href="../../ml_rs/classification/struct.TrivialClassifier.html" title="classification::TrivialClassifier"><code>classification::TrivialClassifier</code></a></li>
+<li><a href="../../ml_rs/classification/struct.MajorityClassifier.html" title="classification::MajorityClassifier"><code>classification::MajorityClassifier</code></a>.</li>
 </ul>
 <h2 id="logistic-regression-in-linear" class="section-header"><a href="#logistic-regression-in-linear">Logistic Regression (in <code>linear</code>)</a></h2>
 <p>These models currently only support binary classification. They are
 appropriate where a linear function of the features would be a good
 predictor of the probability of lying in the positive class.</p>
 <ul>
-<li><a href="linear/struct.LogisticRegression.html"><code>LogisticRegression</code></a></li>
-<li><a href="linear/struct.IRLSLogisticRegression.html"><code>IRLSLogisticRegression</code></a>.
-These classifiers differ only in the algorithm used to fit the model, and
-depending on configuration, one may be significantly faster than the other
-during the fitting process.</li>
+<li><a href="../../ml_rs/classification/linear/struct.LogisticRegression.html" title="classification::linear::LogisticRegression"><code>classification::linear::LogisticRegression</code></a></li>
+<li><a href="../../ml_rs/classification/linear/struct.IRLSLogisticRegression.html" title="classification::linear::IRLSLogisticRegression"><code>classification::linear::IRLSLogisticRegression</code></a>.</li>
 </ul>
+<p>These classifiers differ only in the algorithm used to fit the model, and
+depending on configuration, one may be significantly faster than the other
+during the fitting process.</p>
 <h1 id="examples" class="section-header"><a href="#examples">Examples</a></h1>
 <p>For examples, see the classifiers above, which are provided with 
 usage examples.</p>
@@ -114,7 +119,7 @@ for all unseen data.</p>
 </td></tr><tr class='module-item'><td><a class="struct" href="struct.TrivialClassifier.html" title='ml_rs::classification::TrivialClassifier struct'>TrivialClassifier</a></td><td class='docblock-short'><p>A trivial classifier that is initialised with a class label and outputs
 that label for any sample it is given.</p>
 </td></tr></table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
-<table><tr class='module-item'><td><a class="trait" href="trait.Classifier.html" title='ml_rs::classification::Classifier trait'>Classifier</a></td><td class='docblock-short'><p>This trait represents a classifier that can be fit on numeric data and
+<table><tr class='module-item'><td><a class="trait" href="trait.Classifier.html" title='ml_rs::classification::Classifier trait'>Classifier</a></td><td class='docblock-short'><p>Represents a classifier that can be fit on numeric data and
 outputs a discrete prediction of the correct class.</p>
 </td></tr><tr class='module-item'><td><a class="trait" href="trait.ProbabilityBinaryClassifier.html" title='ml_rs::classification::ProbabilityBinaryClassifier trait'>ProbabilityBinaryClassifier</a></td><td class='docblock-short'><p>A binary classifier that can return calibrated probability estimates in the
 range $[0, 1]$ for a given sample.</p>

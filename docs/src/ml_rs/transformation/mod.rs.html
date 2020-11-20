@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `src/transformation/mod.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>mod.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="shortcut icon" href="../../../favicon.ico">  
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `src/transformation/mod.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>mod.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
+<link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png">
+<link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png">  
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/katex.min.css" integrity="sha384-9eLZqc9ds8eNjO3TmqPeYcDj8n+Qfa4nuSiGYa6DjLNcv9BtN69ZIulL9+8CqC9Y" crossorigin="anonymous">
 <script src="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/katex.min.js"                  integrity="sha384-K3vbOmF2BtaVai+Qk37uypf7VrgBubhQreNQe9aGsz9lB63dIFiQVlJbr92dw2Lx" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/contrib/auto-render.min.js"    integrity="sha384-kmZOZB5ObwgQnS/DuDg6TScgOiWWBiVt0plIRkZCmE6rDZGrEOQeHM5PcHi+nyqe" crossorigin="anonymous"></script>
@@ -8,7 +10,10 @@
             delimiters: [
                 {left: "$$", right: "$$", display: true},
                 {left: "$", right: "$", display: false},
-            ]
+            ],
+            macros: {
+                '\\argmin': '\\mathrm{arg\\,min}'
+            }
         });
     });
 </script>
@@ -32,60 +37,22 @@
 <span id="17">17</span>
 <span id="18">18</span>
 <span id="19">19</span>
-<span id="20">20</span>
-<span id="21">21</span>
-<span id="22">22</span>
-<span id="23">23</span>
-<span id="24">24</span>
-<span id="25">25</span>
-<span id="26">26</span>
-<span id="27">27</span>
-<span id="28">28</span>
-<span id="29">29</span>
-<span id="30">30</span>
-<span id="31">31</span>
-<span id="32">32</span>
-<span id="33">33</span>
-<span id="34">34</span>
-<span id="35">35</span>
-<span id="36">36</span>
-<span id="37">37</span>
-<span id="38">38</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">Error</span>;
 <span class="kw">use</span> <span class="ident">ndarray</span>::{<span class="ident">Array2</span>, <span class="ident">ArrayView2</span>};
 
+<span class="doccomment">/// Contains the [`pca::PrincipalComponentAnalysis`] transformer which can perform</span>
+<span class="doccomment">/// prinicpal component analysis (PCA) on a data matrix.</span>
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">pca</span>;
 
-<span class="doccomment">/// This trait represents a *transformer*, which performs some operation on</span>
+<span class="doccomment">/// Represents a *transformer*, which performs some operation on</span>
 <span class="doccomment">/// the data, such as dimensionality reduction or scaling. A machine learning</span>
 <span class="doccomment">/// pipeline may involve loading data to memory, applying some transformations</span>
 <span class="doccomment">/// to simplify the data, then fitting an appropriate model.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # Details</span>
-<span class="doccomment">/// Transformers in this library can be regarded as various maps on data</span>
-<span class="doccomment">/// matrices in $\mathcal{X}^n$. A transformer $T$ is generally a function</span>
-<span class="doccomment">/// $$T \colon \mathcal{X}^n \to \mathcal{Z}^n$$,</span>
-<span class="doccomment">/// where $\mathcal{Z}$ is some other data space that we transform to.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// A *dimensionality reduction* transformer is a transformation where</span>
-<span class="doccomment">/// $\mathcal{X} = \mathbb{R}^m$, and $\mathcal{Z} = \mathbb{R}^p$, with</span>
-<span class="doccomment">/// $p &lt; m$. We could perform trivial dimensionality reduction by deleting</span>
-<span class="doccomment">/// certain components of each sample vector, or we could perform a more</span>
-<span class="doccomment">/// nuanced transformation. Among the most famous dimensionality reduction</span>
-<span class="doccomment">/// procedures is *principal component analysis* as proposed by Pearson (1901).</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # Prior Art</span>
-<span class="doccomment">/// The idea of a common API for classification, regression and transformation</span>
-<span class="doccomment">/// is used to great success in scikit-learn, a Python machine learning library.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # References</span>
-<span class="doccomment">/// Pedregosa et al, *Scikit-learn: Machine Learning in Python*, J. Machine</span>
-<span class="doccomment">/// Learning Research 12, 2011, pp. 2825–2830.</span>
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Transformer</span> {
-    <span class="kw">fn</span> <span class="ident">fit</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">x</span>: <span class="ident">ArrayView2</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span>;
-    <span class="kw">fn</span> <span class="ident">transform</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">x</span>: <span class="ident">ArrayView2</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Array2</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span>;
-    <span class="kw">fn</span> <span class="ident">fit_transform</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">x</span>: <span class="ident">ArrayView2</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Array2</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">fit</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">x</span>: <span class="ident">ArrayView2</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span>;
+    <span class="kw">fn</span> <span class="ident">transform</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">x</span>: <span class="ident">ArrayView2</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Array2</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span>;
+    <span class="kw">fn</span> <span class="ident">fit_transform</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">x</span>: <span class="ident">ArrayView2</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Array2</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">fit</span>(<span class="ident">x</span>)<span class="question-mark">?</span>;
         <span class="self">self</span>.<span class="ident">transform</span>(<span class="ident">x</span>)
     }

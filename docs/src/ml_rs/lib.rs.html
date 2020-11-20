@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `src/lib.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>lib.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="shortcut icon" href="../../favicon.ico">  
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `src/lib.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>lib.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+<link rel="alternate icon" type="image/png" href="../../favicon-16x16.png">
+<link rel="alternate icon" type="image/png" href="../../favicon-32x32.png">  
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/katex.min.css" integrity="sha384-9eLZqc9ds8eNjO3TmqPeYcDj8n+Qfa4nuSiGYa6DjLNcv9BtN69ZIulL9+8CqC9Y" crossorigin="anonymous">
 <script src="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/katex.min.js"                  integrity="sha384-K3vbOmF2BtaVai+Qk37uypf7VrgBubhQreNQe9aGsz9lB63dIFiQVlJbr92dw2Lx" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/contrib/auto-render.min.js"    integrity="sha384-kmZOZB5ObwgQnS/DuDg6TScgOiWWBiVt0plIRkZCmE6rDZGrEOQeHM5PcHi+nyqe" crossorigin="anonymous"></script>
@@ -8,7 +10,10 @@
             delimiters: [
                 {left: "$$", right: "$$", display: true},
                 {left: "$", right: "$", display: false},
-            ]
+            ],
+            macros: {
+                '\\argmin': '\\mathrm{arg\\,min}'
+            }
         });
     });
 </script>
@@ -139,12 +144,42 @@
 <span id="124">124</span>
 <span id="125">125</span>
 <span id="126">126</span>
+<span id="127">127</span>
+<span id="128">128</span>
+<span id="129">129</span>
+<span id="130">130</span>
+<span id="131">131</span>
+<span id="132">132</span>
+<span id="133">133</span>
+<span id="134">134</span>
+<span id="135">135</span>
+<span id="136">136</span>
+<span id="137">137</span>
+<span id="138">138</span>
+<span id="139">139</span>
+<span id="140">140</span>
+<span id="141">141</span>
+<span id="142">142</span>
+<span id="143">143</span>
+<span id="144">144</span>
+<span id="145">145</span>
+<span id="146">146</span>
+<span id="147">147</span>
+<span id="148">148</span>
+<span id="149">149</span>
+<span id="150">150</span>
+<span id="151">151</span>
+<span id="152">152</span>
+<span id="153">153</span>
+<span id="154">154</span>
+<span id="155">155</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="attribute">#[<span class="ident">warn</span>(<span class="ident">missing_docs</span>)]</span>
 
-<span class="doccomment">/// This module contains a variety of classification models to use with numeric</span>
-<span class="doccomment">/// data. Classification tasks aim to construct a model </span>
-<span class="doccomment">/// $h \colon \mathcal{X} \to \{0, 1, \dots, n - 1\}$ to distinguish between</span>
+<span class="doccomment">/// A variety of supervised classification models to use with numeric data. </span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// Classification tasks aim to construct a model </span>
+<span class="doccomment">/// $h \colon \mathcal{X} \to \\{0, 1, \dots, n - 1\\}$ to distinguish between</span>
 <span class="doccomment">/// $n$ classes of data from the data space $\mathcal{X}$, which is typically</span>
 <span class="doccomment">/// $\mathbb{R}^m$. Classification is a *supervised learning* task which </span>
 <span class="doccomment">/// requires some pre-labelled training data sampled independently from</span>
@@ -171,7 +206,7 @@
 <span class="doccomment">///   evaluate the performance on some *test data* that is distinct from</span>
 <span class="doccomment">///   the training data.</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// An overview of model selection can be found in [1]. Bibliographic </span>
+<span class="doccomment">/// An overview of model selection can be found in \[1\]. Bibliographic </span>
 <span class="doccomment">/// references to the models provided by the library are provided where</span>
 <span class="doccomment">/// appropriate in the documentation of the respective classifier.</span>
 <span class="doccomment">///</span>
@@ -180,7 +215,7 @@
 <span class="doccomment">/// formalism which explains why the procedures we use are justified.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// We begin with a data space $\mathcal{X}$, and the corresponding *target </span>
-<span class="doccomment">/// space* $\mathcal{Y} = \{0, 1, \dots, n - 1\}$. We assume that the data</span>
+<span class="doccomment">/// space* $\mathcal{Y} = \\{0, 1, \dots, n - 1\\}$. We assume that the data</span>
 <span class="doccomment">/// pairs $(x, y) \in \mathcal{X} \times \mathcal{Y}$ emerge frome some</span>
 <span class="doccomment">/// probability disribution $\mathcal{P}$ on $\mathcal{X} \times \mathcal{Y}$,</span>
 <span class="doccomment">/// and that the training data are *independent and identically distributed*</span>
@@ -197,7 +232,7 @@
 <span class="doccomment">/// then</span>
 <span class="doccomment">/// $$ R(h) = \mathbb{E} [ L(h(X), Y) ]. $$</span>
 <span class="doccomment">/// We can estimate the risk over the entire distribution by the *empirical </span>
-<span class="doccomment">/// risk*, given some training data $T = \{ (X_1, Y_1), \dots, (X_p, Y_p) \}$:</span>
+<span class="doccomment">/// risk*, given some training data $T = \\{ (X_1, Y_1), \dots, (X_p, Y_p) \\}$:</span>
 <span class="doccomment">/// $$R_\mathrm{E}(h; T) = \frac1p \sum_{i = 1}^p L(h(X_i), Y_i).$$</span>
 <span class="doccomment">/// Provided that the training data are indeed i.i.d., the expected value of </span>
 <span class="doccomment">/// the empirical risk is the (generalisation) risk $R(h)$, so the empirical</span>
@@ -209,23 +244,24 @@
 <span class="doccomment">/// which is a collection of functions which we consider as candidates. The</span>
 <span class="doccomment">/// *empirical risk minimisation* problem is to find the classifier in </span>
 <span class="doccomment">/// $\mathcal{H}$ that best fits the data:</span>
-<span class="doccomment">/// $$ \text{ERM problem: } \argmin_{h \in \mathcal{H}} R_\mathrm{E}(h; T). $$</span>
+<span class="doccomment">/// $$ \argmin_{h \in \mathcal{H}} R_\mathrm{E}(h; T). $$</span>
 <span class="doccomment">/// </span>
 <span class="doccomment">/// The above is a standard characterisation of statistical learning theory.</span>
-<span class="doccomment">/// A much broader book on the topic is [2].</span>
+<span class="doccomment">/// A much broader book on the topic is \[2\].</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// # Models</span>
 <span class="doccomment">/// Currently, this library supports the following models.</span>
 <span class="doccomment">/// ## Trivial Models</span>
-<span class="doccomment">/// - [`TrivialClassifier`](struct.TrivialClassifier.html)</span>
-<span class="doccomment">/// - [`MajorityClassifier`](struct.MajorityClassifier.html)</span>
-<span class="doccomment">/// ## Logistic Regression (in [`linear`](linear/))</span>
+<span class="doccomment">/// - [`classification::TrivialClassifier`]</span>
+<span class="doccomment">/// - [`classification::MajorityClassifier`].   </span>
+<span class="doccomment">/// ## Logistic Regression (in `linear`)</span>
 <span class="doccomment">/// These models currently only support binary classification. They are</span>
 <span class="doccomment">/// appropriate where a linear function of the features would be a good</span>
 <span class="doccomment">/// predictor of the probability of lying in the positive class.</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// - [`LogisticRegression`](linear/struct.LogisticRegression.html)</span>
-<span class="doccomment">/// - [`IRLSLogisticRegression`](linear/struct.IRLSLogisticRegression.html).</span>
+<span class="doccomment">/// - [`classification::linear::LogisticRegression`]</span>
+<span class="doccomment">/// - [`classification::linear::IRLSLogisticRegression`].</span>
+<span class="doccomment">///</span>
 <span class="doccomment">/// These classifiers differ only in the algorithm used to fit the model, and</span>
 <span class="doccomment">/// depending on configuration, one may be significantly faster than the other</span>
 <span class="doccomment">/// during the fitting process.</span>
@@ -235,11 +271,11 @@
 <span class="doccomment">/// usage examples.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// # References</span>
-<span class="doccomment">/// [1] Hastie et al, *The Elements of Statistical Learning: Data Mining,</span>
+<span class="doccomment">/// \[1\] Hastie et al, *The Elements of Statistical Learning: Data Mining,</span>
 <span class="doccomment">/// Inference and Prediction*, Springer, New York, NY, 2001, 1st ed, </span>
 <span class="doccomment">/// ch. 7.</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// [2] Vapnik, *The Nature of Statistical Learning Theory*, Springer, New</span>
+<span class="doccomment">/// \[2\] Vapnik, *The Nature of Statistical Learning Theory*, Springer, New</span>
 <span class="doccomment">/// York, NY, 1999, 1st ed. </span>
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">classification</span>;
 
@@ -249,8 +285,35 @@
 <span class="doccomment">/// After developing a model, these metrics allow you to evaluate the</span>
 <span class="doccomment">/// performance and decide whether to refine, reject or accept the model.</span>
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">metrics</span>;
+<span class="doccomment">/// Utilities including loading data from CSV files to arrays to input into</span>
+<span class="doccomment">/// models.</span>
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">preprocessing</span>;
+<span class="doccomment">/// Models to predict continuous variables from data. </span>
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">regression</span>;
+<span class="doccomment">/// Procedures to perform scaling, dimensionality reduction and other </span>
+<span class="doccomment">/// transformations on the data before input into a model.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// # Details</span>
+<span class="doccomment">/// Transformers in this library can be regarded as various maps on data</span>
+<span class="doccomment">/// matrices in $\mathcal{X}^n$. A transformer $T$ is generally a function</span>
+<span class="doccomment">/// $$T \colon \mathcal{X}^n \to \mathcal{Z}^n$$,</span>
+<span class="doccomment">/// where $\mathcal{Z}$ is some other data space that we transform to.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// A *dimensionality reduction* transformer is a transformation where</span>
+<span class="doccomment">/// $\mathcal{X} = \mathbb{R}^m$, and $\mathcal{Z} = \mathbb{R}^p$, with</span>
+<span class="doccomment">/// $p &lt; m$. We could perform trivial dimensionality reduction by deleting</span>
+<span class="doccomment">/// certain components of each sample vector, or we could perform a more</span>
+<span class="doccomment">/// nuanced transformation. Among the most famous dimensionality reduction</span>
+<span class="doccomment">/// procedures is *principal component analysis* as proposed by Pearson (1901).</span>
+<span class="doccomment">/// This is implemented in ml-rs as [`transformation::pca::PrincipalComponentAnalysis`]. </span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// # Prior Art</span>
+<span class="doccomment">/// The idea of a common API for classification, regression and transformation</span>
+<span class="doccomment">/// is used to great success in scikit-learn, a Python machine learning library.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// # References</span>
+<span class="doccomment">/// Pedregosa et al, *Scikit-learn: Machine Learning in Python*, J. Machine</span>
+<span class="doccomment">/// Learning Research 12, 2011, pp. 2825–2830.</span>
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">transformation</span>;
 
 <span class="kw">use</span> <span class="ident">thiserror</span>::<span class="ident">Error</span>;

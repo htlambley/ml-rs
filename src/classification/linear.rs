@@ -42,7 +42,7 @@ use ndarray_rand::RandomExt;
 /// decompositions.
 ///
 /// # References
-/// [1] Hastie et al, *The Elements of Statistical Learning: Data Mining,
+/// Hastie et al, *The Elements of Statistical Learning: Data Mining,
 /// Inference and Prediction*, Springer, New York, NY, 2001, 1st ed,
 /// pp. 95–100.
 pub struct IRLSLogisticRegression {

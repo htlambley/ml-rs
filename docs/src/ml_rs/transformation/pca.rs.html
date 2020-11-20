@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `src/transformation/pca.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>pca.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="shortcut icon" href="../../../favicon.ico">  
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `src/transformation/pca.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>pca.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
+<link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png">
+<link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png">  
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/katex.min.css" integrity="sha384-9eLZqc9ds8eNjO3TmqPeYcDj8n+Qfa4nuSiGYa6DjLNcv9BtN69ZIulL9+8CqC9Y" crossorigin="anonymous">
 <script src="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/katex.min.js"                  integrity="sha384-K3vbOmF2BtaVai+Qk37uypf7VrgBubhQreNQe9aGsz9lB63dIFiQVlJbr92dw2Lx" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/contrib/auto-render.min.js"    integrity="sha384-kmZOZB5ObwgQnS/DuDg6TScgOiWWBiVt0plIRkZCmE6rDZGrEOQeHM5PcHi+nyqe" crossorigin="anonymous"></script>
@@ -8,7 +10,10 @@
             delimiters: [
                 {left: "$$", right: "$$", display: true},
                 {left: "$", right: "$", display: false},
-            ]
+            ],
+            macros: {
+                '\\argmin': '\\mathrm{arg\\,min}'
+            }
         });
     });
 </script>
@@ -230,16 +235,16 @@
 <span class="kw">use</span> <span class="ident">ndarray</span>::{<span class="ident">s</span>, <span class="ident">Array1</span>, <span class="ident">Array2</span>, <span class="ident">ArrayView1</span>, <span class="ident">ArrayView2</span>, <span class="ident">Axis</span>};
 <span class="kw">use</span> <span class="ident">ndarray_linalg</span>::<span class="ident">svd</span>::<span class="ident">SVD</span>;
 
-<span class="kw">fn</span> <span class="ident">column_means</span>(<span class="ident">x</span>: <span class="ident">ArrayView2</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>) <span class="op">-&gt;</span> <span class="ident">Array1</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span> {
+<span class="kw">fn</span> <span class="ident">column_means</span>(<span class="ident">x</span>: <span class="ident">ArrayView2</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Array1</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">n</span>: <span class="ident">f64</span> <span class="op">=</span> <span class="ident">x</span>.<span class="ident">nrows</span>() <span class="kw">as</span> <span class="ident">f64</span>;
     <span class="ident">x</span>.<span class="ident">axis_iter</span>(<span class="ident">Axis</span>(<span class="number">1</span>)).<span class="ident">map</span>(<span class="op">|</span><span class="ident">col</span><span class="op">|</span> <span class="ident">col</span>.<span class="ident">sum</span>() <span class="op">/</span> <span class="ident">n</span>).<span class="ident">collect</span>()
 }
 
 <span class="kw">fn</span> <span class="ident">subtract_column_means</span>(<span class="ident">x</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Array2</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>, <span class="ident">means</span>: <span class="ident">ArrayView1</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>) {
-    <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">x</span>.<span class="ident">ncols</span>() <span class="op">==</span> <span class="ident">means</span>.<span class="ident">len</span>());
+    <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">x</span>.<span class="ident">ncols</span>() <span class="op">=</span><span class="op">=</span> <span class="ident">means</span>.<span class="ident">len</span>());
     <span class="ident">x</span>.<span class="ident">axis_iter_mut</span>(<span class="ident">Axis</span>(<span class="number">1</span>))
         .<span class="ident">zip</span>(<span class="ident">means</span>.<span class="ident">iter</span>())
-        .<span class="ident">for_each</span>(<span class="op">|</span>(<span class="kw-2">mut</span> <span class="ident">col</span>, <span class="ident">mean</span>)<span class="op">|</span> <span class="ident">col</span>.<span class="ident">iter_mut</span>().<span class="ident">for_each</span>(<span class="op">|</span><span class="ident">x</span><span class="op">|</span> <span class="kw-2">*</span><span class="ident">x</span> <span class="op">-=</span> <span class="ident">mean</span>))
+        .<span class="ident">for_each</span>(<span class="op">|</span>(<span class="kw-2">mut</span> <span class="ident">col</span>, <span class="ident">mean</span>)<span class="op">|</span> <span class="ident">col</span>.<span class="ident">iter_mut</span>().<span class="ident">for_each</span>(<span class="op">|</span><span class="ident">x</span><span class="op">|</span> <span class="kw-2">*</span><span class="ident">x</span> <span class="op">-</span><span class="op">=</span> <span class="ident">mean</span>))
 }
 
 <span class="doccomment">/// A transformer that can perform principal component analysis (PCA) on a data</span>
@@ -277,12 +282,12 @@
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">PrincipalComponentAnalysis</span> {
     <span class="ident">n_components</span>: <span class="ident">usize</span>,
-    <span class="ident">principal_components</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Array2</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;&gt;</span>,
-    <span class="ident">means</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Array1</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;&gt;</span>,
+    <span class="ident">principal_components</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Array2</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="ident">means</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Array1</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span><span class="op">&gt;</span>,
 }
 
 <span class="kw">impl</span> <span class="ident">PrincipalComponentAnalysis</span> {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">n_components</span>: <span class="ident">usize</span>) <span class="op">-&gt;</span> <span class="ident">PrincipalComponentAnalysis</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">n_components</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">PrincipalComponentAnalysis</span> {
         <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">n_components</span> <span class="op">&gt;</span> <span class="number">0</span>);
         <span class="ident">PrincipalComponentAnalysis</span> {
             <span class="ident">n_components</span>,
@@ -293,7 +298,7 @@
 }
 
 <span class="kw">impl</span> <span class="ident">Transformer</span> <span class="kw">for</span> <span class="ident">PrincipalComponentAnalysis</span> {
-    <span class="kw">fn</span> <span class="ident">fit</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">x</span>: <span class="ident">ArrayView2</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">fit</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">x</span>: <span class="ident">ArrayView2</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">x</span> <span class="op">=</span> <span class="ident">x</span>.<span class="ident">to_owned</span>();
         <span class="kw">let</span> <span class="ident">means</span> <span class="op">=</span> <span class="ident">column_means</span>(<span class="ident">x</span>.<span class="ident">view</span>());
         <span class="ident">subtract_column_means</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">x</span>, <span class="ident">means</span>.<span class="ident">view</span>());
@@ -315,7 +320,7 @@
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="kw">fn</span> <span class="ident">transform</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">x</span>: <span class="ident">ArrayView2</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Array2</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">transform</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">x</span>: <span class="ident">ArrayView2</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Array2</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">x</span> <span class="op">=</span> <span class="ident">x</span>.<span class="ident">to_owned</span>();
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">means</span>) <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">means</span> {
             <span class="ident">subtract_column_means</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">x</span>, <span class="ident">means</span>.<span class="ident">view</span>());
@@ -431,8 +436,8 @@
         <span class="kw">let</span> <span class="ident">pca</span> <span class="op">=</span> <span class="ident">PrincipalComponentAnalysis</span>::<span class="ident">new</span>(<span class="number">1</span>);
         <span class="kw">let</span> <span class="ident">x</span> <span class="op">=</span> <span class="macro">array</span><span class="macro">!</span>[[<span class="number">1.0</span>, <span class="number">0.0</span>]];
         <span class="kw">match</span> <span class="ident">pca</span>.<span class="ident">transform</span>(<span class="ident">x</span>.<span class="ident">view</span>()) {
-            <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="ident">UseBeforeFit</span>) <span class="op">=&gt;</span> {}
-            <span class="kw">_</span> <span class="op">=&gt;</span> <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;Incorrect error returned.&quot;</span>),
+            <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="ident">UseBeforeFit</span>) <span class="op">=</span><span class="op">&gt;</span> {}
+            <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;Incorrect error returned.&quot;</span>),
         }
     }
 }

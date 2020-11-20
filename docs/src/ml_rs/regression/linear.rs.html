@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `src/regression/linear.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>linear.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="shortcut icon" href="../../../favicon.ico">  
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `src/regression/linear.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>linear.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
+<link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png">
+<link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png">  
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/katex.min.css" integrity="sha384-9eLZqc9ds8eNjO3TmqPeYcDj8n+Qfa4nuSiGYa6DjLNcv9BtN69ZIulL9+8CqC9Y" crossorigin="anonymous">
 <script src="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/katex.min.js"                  integrity="sha384-K3vbOmF2BtaVai+Qk37uypf7VrgBubhQreNQe9aGsz9lB63dIFiQVlJbr92dw2Lx" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/contrib/auto-render.min.js"    integrity="sha384-kmZOZB5ObwgQnS/DuDg6TScgOiWWBiVt0plIRkZCmE6rDZGrEOQeHM5PcHi+nyqe" crossorigin="anonymous"></script>
@@ -8,7 +10,10 @@
             delimiters: [
                 {left: "$$", right: "$$", display: true},
                 {left: "$", right: "$", display: false},
-            ]
+            ],
+            macros: {
+                '\\argmin': '\\mathrm{arg\\,min}'
+            }
         });
     });
 </script>
@@ -171,18 +176,18 @@
 <span class="doccomment">/// ```</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Default</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">LinearRegression</span> {
-    <span class="ident">weights</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Array1</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;&gt;</span>,
+    <span class="ident">weights</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Array1</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span><span class="op">&gt;</span>,
 }
 
 <span class="kw">impl</span> <span class="ident">LinearRegression</span> {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() <span class="op">-&gt;</span> <span class="ident">LinearRegression</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">LinearRegression</span> {
         <span class="ident">LinearRegression</span> { <span class="ident">weights</span>: <span class="prelude-val">None</span> }
     }
 }
 
 <span class="kw">impl</span> <span class="ident">Regressor</span> <span class="kw">for</span> <span class="ident">LinearRegression</span> {
-    <span class="kw">fn</span> <span class="ident">fit</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">x</span>: <span class="ident">ArrayView2</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">f64</span><span class="op">&gt;</span>, <span class="ident">y</span>: <span class="ident">ArrayView1</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">f64</span><span class="op">&gt;</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="kw">if</span> <span class="ident">x</span>.<span class="ident">nrows</span>() <span class="op">!=</span> <span class="ident">y</span>.<span class="ident">len</span>() <span class="op">||</span> <span class="ident">x</span>.<span class="ident">nrows</span>() <span class="op">==</span> <span class="number">0</span> {
+    <span class="kw">fn</span> <span class="ident">fit</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">x</span>: <span class="ident">ArrayView2</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">f64</span><span class="op">&gt;</span>, <span class="ident">y</span>: <span class="ident">ArrayView1</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">f64</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
+        <span class="kw">if</span> <span class="ident">x</span>.<span class="ident">nrows</span>() <span class="op">!</span><span class="op">=</span> <span class="ident">y</span>.<span class="ident">len</span>() <span class="op">|</span><span class="op">|</span> <span class="ident">x</span>.<span class="ident">nrows</span>() <span class="op">=</span><span class="op">=</span> <span class="number">0</span> {
             <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="ident">InvalidTrainingData</span>);
         }
 
@@ -191,7 +196,7 @@
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="kw">fn</span> <span class="ident">predict</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">x</span>: <span class="ident">ArrayView2</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Array1</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">predict</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">x</span>: <span class="ident">ArrayView2</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Array1</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">weights</span>) <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">weights</span> {
             <span class="prelude-val">Ok</span>(<span class="ident">x</span>.<span class="ident">dot</span>(<span class="ident">weights</span>))
         } <span class="kw">else</span> {
@@ -235,8 +240,8 @@
         <span class="kw">let</span> <span class="ident">y</span> <span class="op">=</span> <span class="macro">array</span><span class="macro">!</span>[<span class="number">0.</span>, <span class="number">1.</span>, <span class="number">2.</span>];
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">regressor</span> <span class="op">=</span> <span class="ident">LinearRegression</span>::<span class="ident">new</span>();
         <span class="kw">match</span> <span class="ident">regressor</span>.<span class="ident">fit</span>(<span class="ident">x</span>.<span class="ident">view</span>(), <span class="ident">y</span>.<span class="ident">view</span>()) {
-            <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="ident">InvalidTrainingData</span>) <span class="op">=&gt;</span> {}
-            <span class="kw">_</span> <span class="op">=&gt;</span> <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;Did not receive correct error&quot;</span>),
+            <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="ident">InvalidTrainingData</span>) <span class="op">=</span><span class="op">&gt;</span> {}
+            <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;Did not receive correct error&quot;</span>),
         }
     }
 
@@ -245,8 +250,8 @@
         <span class="kw">let</span> <span class="ident">x</span> <span class="op">=</span> <span class="macro">array</span><span class="macro">!</span>[[<span class="number">1.</span>, <span class="number">2.</span>], [<span class="number">3.</span>, <span class="number">4.</span>]];
         <span class="kw">let</span> <span class="ident">regressor</span> <span class="op">=</span> <span class="ident">LinearRegression</span>::<span class="ident">new</span>();
         <span class="kw">match</span> <span class="ident">regressor</span>.<span class="ident">predict</span>(<span class="ident">x</span>.<span class="ident">view</span>()) {
-            <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="ident">UseBeforeFit</span>) <span class="op">=&gt;</span> {}
-            <span class="kw">_</span> <span class="op">=&gt;</span> <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;Did not receive correct error&quot;</span>),
+            <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="ident">UseBeforeFit</span>) <span class="op">=</span><span class="op">&gt;</span> {}
+            <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;Did not receive correct error&quot;</span>),
         }
     }
 }
