@@ -1,0 +1,1 @@
+initSidebarItems({"mod":[["pca",""]],"trait":[["Transformer","This trait represents a transformer, which performs some operation on the data, such as dimensionality reduction or scaling. A machine learning pipeline may involve loading data to memory, applying some transformations to simplify the data, then fitting an appropriate model."]]});

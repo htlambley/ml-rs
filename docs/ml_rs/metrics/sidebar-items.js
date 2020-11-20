@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["accuracy_score","Calculate the accuracy of an array of predictions `y_pred` from a classifier against the true values given in `y_true`."]],"mod":[["binary",""]]});

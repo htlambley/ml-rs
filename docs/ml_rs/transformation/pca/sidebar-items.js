@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["PrincipalComponentAnalysis","A transformer that can perform principal component analysis (PCA) on a data matrix."]]});

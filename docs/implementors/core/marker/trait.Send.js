@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["ml_rs"] = [{"text":"impl Send for Error","synthetic":true,"types":[]},{"text":"impl Send for TrivialClassifier","synthetic":true,"types":[]},{"text":"impl Send for MajorityClassifier","synthetic":true,"types":[]},{"text":"impl Send for IRLSLogisticRegression","synthetic":true,"types":[]},{"text":"impl Send for LogisticRegression","synthetic":true,"types":[]},{"text":"impl&lt;'a&gt; Send for CsvReader&lt;'a&gt;","synthetic":true,"types":[]},{"text":"impl Send for LinearRegression","synthetic":true,"types":[]},{"text":"impl Send for PrincipalComponentAnalysis","synthetic":true,"types":[]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["LinearRegression","Fits a linear model to data using the ordinary least squares method."]]});

@@ -1,0 +1,46 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="API documentation for the Rust `precision_recall_score` fn in crate `ml_rs`."><meta name="keywords" content="rust, rustlang, rust-lang, precision_recall_score"><title>ml_rs::metrics::binary::precision_recall_score - Rust</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="shortcut icon" href="../../../favicon.ico">  
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/katex.min.css" integrity="sha384-9eLZqc9ds8eNjO3TmqPeYcDj8n+Qfa4nuSiGYa6DjLNcv9BtN69ZIulL9+8CqC9Y" crossorigin="anonymous">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/katex.min.js"                  integrity="sha384-K3vbOmF2BtaVai+Qk37uypf7VrgBubhQreNQe9aGsz9lB63dIFiQVlJbr92dw2Lx" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/contrib/auto-render.min.js"    integrity="sha384-kmZOZB5ObwgQnS/DuDg6TScgOiWWBiVt0plIRkZCmE6rDZGrEOQeHM5PcHi+nyqe" crossorigin="anonymous"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement(document.body, {
+            delimiters: [
+                {left: "$$", right: "$$", display: true},
+                {left: "$", right: "$", display: false},
+            ]
+        });
+    });
+</script>
+<style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc fn"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../ml_rs/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a><div class="sidebar-elems"><p class='location'><a href='../../index.html'>ml_rs</a>::<wbr><a href='../index.html'>metrics</a>::<wbr><a href='index.html'>binary</a></p><script>window.sidebarCurrent = {name: 'precision_recall_score', ty: 'fn', relpath: ''};</script><script defer src="sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
+                <a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class='fqn'><span class='out-of-band'><span id='render-detail'><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class='inner'>&#x2212;</span>]</a></span><a class='srclink' href='../../../src/ml_rs/metrics/binary.rs.html#40-84' title='goto source code'>[src]</a></span><span class='in-band'>Function <a href='../../index.html'>ml_rs</a>::<wbr><a href='../index.html'>metrics</a>::<wbr><a href='index.html'>binary</a>::<wbr><a class="fn" href=''>precision_recall_score</a></span></h1><pre class='rust fn'>pub fn precision_recall_score(<br>&nbsp;&nbsp;&nbsp;&nbsp;y_true: <a class="type" href="https://docs.rs/ndarray/0.13/ndarray/aliases/type.ArrayView1.html" title="type ndarray::aliases::ArrayView1">ArrayView1</a>&lt;'_, <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.usize.html">usize</a>&gt;, <br>&nbsp;&nbsp;&nbsp;&nbsp;y_pred: <a class="type" href="https://docs.rs/ndarray/0.13/ndarray/aliases/type.ArrayView1.html" title="type ndarray::aliases::ArrayView1">ArrayView1</a>&lt;'_, <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.usize.html">usize</a>&gt;<br>) -&gt; <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">(</a><a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.f64.html">f64</a>&gt;, <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.f64.html">f64</a>&gt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">)</a></pre><div class='docblock'><p>Calculates the precision and recall of a binary classifier given the true
+and predicted classes for some test data.</p>
+<p>Precision and recall only make sense for <strong>binary classification</strong>
+problems, so <code>y_true</code> and <code>y_pred</code> must contain only labels in {0, 1}.
+Class 1 will be regarded as the &quot;positive&quot; class, and class 0 will
+be regarded as the &quot;negative&quot; class.</p>
+<h1 id="arguments" class="section-header"><a href="#arguments">Arguments</a></h1>
+<p><code>y_true</code> - the true classes of the data
+<code>y_pred</code> - the classes predicted by the binary classifier</p>
+<h1 id="interpretation" class="section-header"><a href="#interpretation">Interpretation</a></h1>
+<p>A <strong>true positive</strong> is a case where the classifier has predicted case 1 on
+the data, and the true class was indeed 1. A <strong>false positive</strong> is one
+which was predicted to be class 1, but was actually in class 0. True and
+false negatives are defined likewise.</p>
+<p>The <strong>precision</strong> of a classifier on some data (x_1, y_1), ..., (x_n, y_n)
+is the proportion of positive predictions that were true positives. This
+lies in the interval [0, 1]. A perfect classifier should have precision 1,
+because every positive prediction will be a true positive case. A precision
+of 0 means that every positive case predicted by the classifier was actually
+a negative case.</p>
+<p>The <strong>recall</strong> of a classifier is the proportion of the positive cases that
+the classifier identifies correctly: a recall of 0.5 means that half of the
+positive cases in the data are predicted to be positive by the classifier.
+This also lies in [0, 1] with 1 being the best possible score.</p>
+<h1 id="returns" class="section-header"><a href="#returns">Returns</a></h1>
+<p>A pair representing the precision and recall respectively. In the
+degenerate case that the classifier makes no positive predictions,
+the precision is undefined and <code>None</code> will be returned. Likewise,
+if there are no positive cases in the data, the recall is undefined
+and <code>None</code> will be returned.</p>
+</div></section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../../../";window.currentCrate = "ml_rs";</script><script src="../../../main.js"></script><script defer src="../../../search-index.js"></script></body></html>
