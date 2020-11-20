@@ -3,6 +3,8 @@ Machine learning library in Rust built on
 [`ndarray`](https://github.com/rust-ndarray/ndarray) and 
 [`argmin`](http://argmin-rs.org/).
 
+[**Documentation**](https://htlambley.github.io/ml-rs/ml_rs/)
+
 ## Features
 - **Classification**
   - Logistic Regression

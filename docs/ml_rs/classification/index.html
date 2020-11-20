@@ -13,9 +13,98 @@
     });
 </script>
 <style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc mod"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../ml_rs/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a><p class='location'>Module classification</p><div class="sidebar-elems"><div class="block items"><ul><li><a href="#modules">Modules</a></li><li><a href="#structs">Structs</a></li><li><a href="#traits">Traits</a></li><li><a href="#functions">Functions</a></li></ul></div><p class='location'><a href='../index.html'>ml_rs</a></p><script>window.sidebarCurrent = {name: 'classification', ty: 'mod', relpath: '../'};</script><script defer src="../sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
-                <a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class='fqn'><span class='out-of-band'><span id='render-detail'><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class='inner'>&#x2212;</span>]</a></span><a class='srclink' href='../../src/ml_rs/classification/mod.rs.html#1-308' title='goto source code'>[src]</a></span><span class='in-band'>Module <a href='../index.html'>ml_rs</a>::<wbr><a class="mod" href=''>classification</a></span></h1><div class='docblock'><p>A variety of classification models. The <code>linear</code> module includes
-linear models such as <code>LogisticRegression</code>, which performs logistic
-regression on the data.</p>
+                <a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class='fqn'><span class='out-of-band'><span id='render-detail'><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class='inner'>&#x2212;</span>]</a></span><a class='srclink' href='../../src/ml_rs/classification/mod.rs.html#1-295' title='goto source code'>[src]</a></span><span class='in-band'>Module <a href='../index.html'>ml_rs</a>::<wbr><a class="mod" href=''>classification</a></span></h1><div class='docblock'><p>This module contains a variety of classification models to use with numeric
+data. Classification tasks aim to construct a model 
+$h \colon \mathcal{X} \to {0, 1, \dots, n - 1}$ to distinguish between
+$n$ classes of data from the data space $\mathcal{X}$, which is typically
+$\mathbb{R}^m$. Classification is a <em>supervised learning</em> task which 
+requires some pre-labelled training data sampled independently from
+the data distribution.</p>
+<h1 id="context" class="section-header"><a href="#context">Context</a></h1>
+<p>When designing a classifier, we start with some training data 
+$(X_1, Y_1), \dots, (X_p, Y_p)$, and choose a <em>model</em>, which determines the
+collection $\mathcal{H}$ of classifiers that we want to choose from. 
+Generally, we then proceed by trying to find the classifier in 
+$\mathcal{H}$ that minimises the error over the training data, using some
+suitable algorithm. We then evaluate the performance of the model on some
+new data sampled from the data distribution in order to estimate the 
+generalisation error. </p>
+<p>This library supports the procedure by providing several models, listed
+below, which can be fit on data, and some tools in the <code>metrics</code> module
+to evaluate the performance of models on new data. The steps to take are:</p>
+<ul>
+<li>Load the dataset into memory as a <em>data matrix</em> $X$ and an array of 
+<em>labels</em> $y$.</li>
+<li>Choose a suitable model and fit it (see the <code>Classifier</code> trait) on 
+<em>training data</em>.</li>
+<li>Use a scoring function from <code>metrics</code> such as the accuracy score to
+evaluate the performance on some <em>test data</em> that is distinct from
+the training data.</li>
+</ul>
+<p>An overview of model selection can be found in [1]. Bibliographic 
+references to the models provided by the library are provided where
+appropriate in the documentation of the respective classifier.</p>
+<h2 id="statistical-learning-theory" class="section-header"><a href="#statistical-learning-theory">Statistical Learning Theory</a></h2>
+<p>This section can freely be omitted, but provides interesting mathematical 
+formalism which explains why the procedures we use are justified.</p>
+<p>We begin with a data space $\mathcal{X}$, and the corresponding <em>target 
+space</em> $\mathcal{Y} = {0, 1, \dots, n - 1}$. We assume that the data
+pairs $(x, y) \in \mathcal{X} \times \mathcal{Y}$ emerge frome some
+probability disribution $\mathcal{P}$ on $\mathcal{X} \times \mathcal{Y}$,
+and that the training data are <em>independent and identically distributed</em>
+(i.i.d.) samples from $\mathcal{P}$. The goal is to learn the label of 
+any sample $x \in \mathcal{X}$: in other words, we would like to know
+the conditional probability $\mathbb{P} [ Y = y \mid X \in A]$ for any
+subset $A$ of $\mathcal{X}$. We would expect that if the training data
+are i.i.d., then we should be able to make a good estimation of the 
+conditional probability if we have sufficient data.</p>
+<p>We choose a function to measure the <em>risk</em>, $R(h)$, that a given classifier
+$h$ makes an error. This is taken over the entire distribution with respect
+to some <em>loss function</em>, so if $(X, Y)$ are sampled from $\mathcal{P}$, 
+then
+$$ R(h) = \mathbb{E} [ L(h(X), Y) ]. $$
+We can estimate the risk over the entire distribution by the <em>empirical 
+risk</em>, given some training data $T = { (X_1, Y_1), \dots, (X_p, Y_p) }$:
+$$R_\mathrm{E}(h; T) = \frac1p \sum_{i = 1}^p L(h(X_i), Y_i).$$
+Provided that the training data are indeed i.i.d., the expected value of 
+the empirical risk is the (generalisation) risk $R(h)$, so the empirical
+risk serves as an estimate of generalisation error. If the data are not
+i.i.d. then the empirical risk may not be a good estimate of the 
+true risk, leading to poor performance on unseen data.</p>
+<p>Choosing a model amounts to selecting a <em>hypothesis class</em> $\mathcal{H}$,
+which is a collection of functions which we consider as candidates. The
+<em>empirical risk minimisation</em> problem is to find the classifier in 
+$\mathcal{H}$ that best fits the data:
+$$ \text{ERM problem: } \argmin_{h \in \mathcal{H}} R_\mathrm{E}(h; T). $$</p>
+<p>The above is a standard characterisation of statistical learning theory.
+A much broader book on the topic is [2].</p>
+<h1 id="models" class="section-header"><a href="#models">Models</a></h1>
+<p>Currently, this library supports the following models.</p>
+<h2 id="trivial-models" class="section-header"><a href="#trivial-models">Trivial Models</a></h2>
+<ul>
+<li><a href="struct.TrivialClassifier.html"><code>TrivialClassifier</code></a></li>
+<li><a href="struct.MajorityClassifier.html"><code>MajorityClassifier</code></a></li>
+</ul>
+<h2 id="logistic-regression-in-linear" class="section-header"><a href="#logistic-regression-in-linear">Logistic Regression (in <code>linear</code>)</a></h2>
+<p>These models currently only support binary classification. They are
+appropriate where a linear function of the features would be a good
+predictor of the probability of lying in the positive class.</p>
+<ul>
+<li><a href="linear/struct.LogisticRegression.html"><code>LogisticRegression</code></a></li>
+<li><a href="linear/struct.IRLSLogisticRegression.html"><code>IRLSLogisticRegression</code></a>.
+These classifiers differ only in the algorithm used to fit the model, and
+depending on configuration, one may be significantly faster than the other
+during the fitting process.</li>
+</ul>
+<h1 id="examples" class="section-header"><a href="#examples">Examples</a></h1>
+<p>For examples, see the classifiers above, which are provided with 
+usage examples.</p>
+<h1 id="references" class="section-header"><a href="#references">References</a></h1>
+<p>[1] Hastie et al, <em>The Elements of Statistical Learning: Data Mining,
+Inference and Prediction</em>, Springer, New York, NY, 2001, 1st ed, 
+ch. 7.</p>
+<p>[2] Vapnik, <em>The Nature of Statistical Learning Theory</em>, Springer, New
+York, NY, 1999, 1st ed. </p>
 </div><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
 <table><tr class='module-item'><td><a class="mod" href="linear/index.html" title='ml_rs::classification::linear mod'>linear</a></td><td class='docblock-short'><p>Classifiers based on linear regression (which, despite its name, is a
 classification model).</p>

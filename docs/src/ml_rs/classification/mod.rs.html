@@ -308,19 +308,6 @@
 <span id="293">293</span>
 <span id="294">294</span>
 <span id="295">295</span>
-<span id="296">296</span>
-<span id="297">297</span>
-<span id="298">298</span>
-<span id="299">299</span>
-<span id="300">300</span>
-<span id="301">301</span>
-<span id="302">302</span>
-<span id="303">303</span>
-<span id="304">304</span>
-<span id="305">305</span>
-<span id="306">306</span>
-<span id="307">307</span>
-<span id="308">308</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">Error</span>;
 <span class="kw">use</span> <span class="ident">ndarray</span>::{<span class="ident">Array1</span>, <span class="ident">ArrayView1</span>, <span class="ident">ArrayView2</span>};
@@ -351,21 +338,8 @@
 <span class="doccomment">/// Models that can also provide probability estimates will implement the</span>
 <span class="doccomment">/// `ProbabilityBinaryClassifer` trait as well as this trait.</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// # Models</span>
-<span class="doccomment">/// Currently, this library supports the following models.</span>
-<span class="doccomment">/// ## Trivial Models</span>
-<span class="doccomment">/// - `TrivialClassifier`</span>
-<span class="doccomment">/// - `MajorityClassifier`</span>
-<span class="doccomment">/// ## Logistic Regression</span>
-<span class="doccomment">/// These models currently only support binary classificatin. They are</span>
-<span class="doccomment">/// appropriate where a linear function of the features would be a good</span>
-<span class="doccomment">/// predictor of the probability of lying in the positive class.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// - `LogisticRegression`</span>
-<span class="doccomment">/// - `IRLSLogisticRegression`.</span>
-<span class="doccomment">/// These classifiers differ only in the algorithm used to fit the model, and</span>
-<span class="doccomment">/// depending on configuration, one may be significantly faster than the other</span>
-<span class="doccomment">/// during the fitting process.</span>
+<span class="doccomment">/// See the module-level documentation for a broad overview of classification</span>
+<span class="doccomment">/// with ml-rs.</span>
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Classifier</span> {
     <span class="doccomment">/// Fits the classifier to the given data matrix `x` and labels `y`. This</span>
     <span class="doccomment">/// does not support *online learning* and running this on a classifier</span>

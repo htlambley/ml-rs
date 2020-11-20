@@ -27,21 +27,8 @@ pub fn labels_binary(y: ArrayView1<usize>) -> bool {
 /// Models that can also provide probability estimates will implement the
 /// `ProbabilityBinaryClassifer` trait as well as this trait.
 ///
-/// # Models
-/// Currently, this library supports the following models.
-/// ## Trivial Models
-/// - `TrivialClassifier`
-/// - `MajorityClassifier`
-/// ## Logistic Regression
-/// These models currently only support binary classificatin. They are
-/// appropriate where a linear function of the features would be a good
-/// predictor of the probability of lying in the positive class.
-///
-/// - `LogisticRegression`
-/// - `IRLSLogisticRegression`.
-/// These classifiers differ only in the algorithm used to fit the model, and
-/// depending on configuration, one may be significantly faster than the other
-/// during the fitting process.
+/// See the module-level documentation for a broad overview of classification
+/// with ml-rs.
 pub trait Classifier {
     /// Fits the classifier to the given data matrix `x` and labels `y`. This
     /// does not support *online learning* and running this on a classifier
