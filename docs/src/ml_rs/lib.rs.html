@@ -210,7 +210,169 @@
 <span id="190">190</span>
 <span id="191">191</span>
 <span id="192">192</span>
+<span id="193">193</span>
+<span id="194">194</span>
+<span id="195">195</span>
+<span id="196">196</span>
+<span id="197">197</span>
+<span id="198">198</span>
+<span id="199">199</span>
+<span id="200">200</span>
+<span id="201">201</span>
+<span id="202">202</span>
+<span id="203">203</span>
+<span id="204">204</span>
+<span id="205">205</span>
+<span id="206">206</span>
+<span id="207">207</span>
+<span id="208">208</span>
+<span id="209">209</span>
+<span id="210">210</span>
+<span id="211">211</span>
+<span id="212">212</span>
+<span id="213">213</span>
+<span id="214">214</span>
+<span id="215">215</span>
+<span id="216">216</span>
+<span id="217">217</span>
+<span id="218">218</span>
+<span id="219">219</span>
+<span id="220">220</span>
+<span id="221">221</span>
+<span id="222">222</span>
+<span id="223">223</span>
+<span id="224">224</span>
+<span id="225">225</span>
+<span id="226">226</span>
+<span id="227">227</span>
+<span id="228">228</span>
+<span id="229">229</span>
+<span id="230">230</span>
+<span id="231">231</span>
+<span id="232">232</span>
+<span id="233">233</span>
+<span id="234">234</span>
+<span id="235">235</span>
+<span id="236">236</span>
+<span id="237">237</span>
+<span id="238">238</span>
+<span id="239">239</span>
+<span id="240">240</span>
+<span id="241">241</span>
+<span id="242">242</span>
+<span id="243">243</span>
+<span id="244">244</span>
+<span id="245">245</span>
+<span id="246">246</span>
+<span id="247">247</span>
+<span id="248">248</span>
+<span id="249">249</span>
+<span id="250">250</span>
+<span id="251">251</span>
+<span id="252">252</span>
+<span id="253">253</span>
+<span id="254">254</span>
+<span id="255">255</span>
+<span id="256">256</span>
+<span id="257">257</span>
+<span id="258">258</span>
+<span id="259">259</span>
+<span id="260">260</span>
+<span id="261">261</span>
+<span id="262">262</span>
+<span id="263">263</span>
+<span id="264">264</span>
+<span id="265">265</span>
+<span id="266">266</span>
+<span id="267">267</span>
+<span id="268">268</span>
+<span id="269">269</span>
+<span id="270">270</span>
+<span id="271">271</span>
+<span id="272">272</span>
+<span id="273">273</span>
 </pre><div class="example-wrap"><pre class="rust ">
+<span class="doccomment">//! # ml-rs</span>
+<span class="doccomment">//! This crate implements various machine learning algorithms in Rust,</span>
+<span class="doccomment">//! built on the [`ndarray`](https://github.com/rust-ndarray/ndarray)</span>
+<span class="doccomment">//! crate.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! Currently, there is support for classification and regression models,</span>
+<span class="doccomment">//! transformation (including principal component analysis) and metrics</span>
+<span class="doccomment">//! to evaluate model performance.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! # Setup</span>
+<span class="doccomment">//! This crate uses BLAS/LAPACK to accelerate the linear algebra operations</span>
+<span class="doccomment">//! needed. This crate is built on `ndarray-linalg`, which supports the </span>
+<span class="doccomment">//! following backends:</span>
+<span class="doccomment">//! - [Netlib](https://www.netlib.org/)</span>
+<span class="doccomment">//! - [OpenBLAS](https://www.openblas.net/)</span>
+<span class="doccomment">//! - [Intel MKL](https://software.intel.com/content/www/us/en/develop/tools/math-kernel-library.html).</span>
+<span class="doccomment">//! You can choose which library you wish to link to. Roughly speaking, you </span>
+<span class="doccomment">//! should expect Netlib to be slower than the other two choices, and if you</span>
+<span class="doccomment">//! are deploying on Intel processors, MKL is likely to perform best (though</span>
+<span class="doccomment">//! the library is not open-source).</span>
+<span class="doccomment">//! </span>
+<span class="doccomment">//! On Debian systems, a working configuration can be obtained by installing</span>
+<span class="doccomment">//! the packages `libopenblas-base`, `libopenblas-dev` and `liblapacke-dev`,</span>
+<span class="doccomment">//! and adding</span>
+<span class="doccomment">//! ```toml</span>
+<span class="doccomment">//! openblas-src = { version = &quot;0.7&quot;, features = [&quot;system&quot;] }</span>
+<span class="doccomment">//! ```</span>
+<span class="doccomment">//! to your `Cargo.toml`, which will link to the system OpenBLAS.</span>
+<span class="doccomment">//! # Quick Start Guide</span>
+<span class="doccomment">//! - Load data from CSV to a 2-dimensional array:</span>
+<span class="doccomment">//! ```no_run</span>
+<span class="doccomment">//! use ml_rs::preprocessing::CsvReader;</span>
+<span class="doccomment">//! use ndarray::Array2;</span>
+<span class="doccomment">//! use std::fs::File;</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! let csv_file = File::open(&quot;data.csv&quot;).unwrap();</span>
+<span class="doccomment">//! let reader = CsvReader::new(&amp;csv_file);</span>
+<span class="doccomment">//! // Pass the number of rows and columns expected</span>
+<span class="doccomment">//! let n_columns = 5;</span>
+<span class="doccomment">//! let n_rows = 1000;</span>
+<span class="doccomment">//! let data: Array2&lt;f64&gt; = reader.read(n_rows, n_columns);</span>
+<span class="doccomment">//! ```</span>
+<span class="doccomment">//! - Separate into data matrix and target vector:</span>
+<span class="doccomment">//! ```</span>
+<span class="doccomment">//! # use ndarray::array;</span>
+<span class="doccomment">//! # let data = array![[-1.0, 1.0, 1.0, -1.0, 3.0], [2.0, 4.0, 5.0, 1.0, 6.0]];</span>
+<span class="doccomment">//! use ndarray::{Axis, s};</span>
+<span class="doccomment">//! // Choose the last column of the `data` array to be the target</span>
+<span class="doccomment">//! let feature_col_index = 4;</span>
+<span class="doccomment">//! let x = data.slice(s![.., 0..feature_col_index]);</span>
+<span class="doccomment">//! let y = data.index_axis(Axis(1), feature_col_index);</span>
+<span class="doccomment">//! ```</span>
+<span class="doccomment">//! - Perform regression:</span>
+<span class="doccomment">//! ```no_run</span>
+<span class="doccomment">//! # use ndarray::array;</span>
+<span class="doccomment">//! # let _x = array![[-1.0, 1.0, 1.0, -1.0], [2.0, 4.0, 5.0, 1.0]];</span>
+<span class="doccomment">//! # let _y = array![3.0, 6.0];</span>
+<span class="doccomment">//! # let x = _x.view();</span>
+<span class="doccomment">//! # let y = _y.view();</span>
+<span class="doccomment">//! use ml_rs::regression::linear::LinearRegression;</span>
+<span class="doccomment">//! use ml_rs::regression::Regressor;</span>
+<span class="doccomment">//! let mut lm = LinearRegression::new();</span>
+<span class="doccomment">//! // Fit a linear regression model to the data, unwrapping to check for errors</span>
+<span class="doccomment">//! lm.fit(x, y).unwrap();</span>
+<span class="doccomment">//! // Get the predicted values for `x` given by the regression model</span>
+<span class="doccomment">//! let y_pred = lm.predict(x);</span>
+<span class="doccomment">//! ```</span>
+<span class="doccomment">//! - Measure the performance of a model:</span>
+<span class="doccomment">//! ```</span>
+<span class="doccomment">//! # let _y = array![3.0, 6.0];</span>
+<span class="doccomment">//! # let y = _y.view();</span>
+<span class="doccomment">//! # let y_pred = array![3.0, 6.0];</span>
+<span class="doccomment">//! use ml_rs::metrics::accuracy_score;</span>
+<span class="doccomment">//! // We own `y_pred`, so we need to return a view, which means we</span>
+<span class="doccomment">//! // don&#39;t consume it when calculating accuracy.</span>
+<span class="doccomment">//! let train_accuracy = accuracy_score(y, y_pred.view());</span>
+<span class="doccomment">//! println!(&quot;Training set accuracy: {}%&quot;, train_accuracy * 100.0);</span>
+<span class="doccomment">//! ```</span>
+<span class="doccomment">//! Classification works very similarly to regression: for an example,</span>
+<span class="doccomment">//! see the [`classification`] module.</span>
+
 <span class="attribute">#[<span class="ident">warn</span>(<span class="ident">missing_docs</span>)]</span>
 
 <span class="doccomment">/// A variety of supervised classification models to use with numeric data.</span>

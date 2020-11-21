@@ -1,3 +1,84 @@
+//! # ml-rs
+//! This crate implements various machine learning algorithms in Rust,
+//! built on the [`ndarray`](https://github.com/rust-ndarray/ndarray)
+//! crate.
+//!
+//! Currently, there is support for classification and regression models,
+//! transformation (including principal component analysis) and metrics
+//! to evaluate model performance.
+//!
+//! # Setup
+//! This crate uses BLAS/LAPACK to accelerate the linear algebra operations
+//! needed. This crate is built on `ndarray-linalg`, which supports the
+//! following backends:
+//! - [Netlib](https://www.netlib.org/)
+//! - [OpenBLAS](https://www.openblas.net/)
+//! - [Intel MKL](https://software.intel.com/content/www/us/en/develop/tools/math-kernel-library.html).
+//! You can choose which library you wish to link to. Roughly speaking, you
+//! should expect Netlib to be slower than the other two choices, and if you
+//! are deploying on Intel processors, MKL is likely to perform best (though
+//! the library is not open-source).
+//!
+//! On Debian systems, a working configuration can be obtained by installing
+//! the packages `libopenblas-base`, `libopenblas-dev` and `liblapacke-dev`,
+//! and adding
+//! ```toml
+//! openblas-src = { version = "0.7", features = ["system"] }
+//! ```
+//! to your `Cargo.toml`, which will link to the system OpenBLAS.
+//! # Quick Start Guide
+//! - Load data from CSV to a 2-dimensional array:
+//! ```no_run
+//! use ml_rs::preprocessing::CsvReader;
+//! use ndarray::Array2;
+//! use std::fs::File;
+//!
+//! let csv_file = File::open("data.csv").unwrap();
+//! let reader = CsvReader::new(&csv_file);
+//! // Pass the number of rows and columns expected
+//! let n_columns = 5;
+//! let n_rows = 1000;
+//! let data: Array2<f64> = reader.read(n_rows, n_columns);
+//! ```
+//! - Separate into data matrix and target vector:
+//! ```
+//! # use ndarray::array;
+//! # let data = array![[-1.0, 1.0, 1.0, -1.0, 3.0], [2.0, 4.0, 5.0, 1.0, 6.0]];
+//! use ndarray::{Axis, s};
+//! // Choose the last column of the `data` array to be the target
+//! let feature_col_index = 4;
+//! let x = data.slice(s![.., 0..feature_col_index]);
+//! let y = data.index_axis(Axis(1), feature_col_index);
+//! ```
+//! - Perform regression:
+//! ```no_run
+//! # use ndarray::array;
+//! # let _x = array![[-1.0, 1.0, 1.0, -1.0], [2.0, 4.0, 5.0, 1.0]];
+//! # let _y = array![3.0, 6.0];
+//! # let x = _x.view();
+//! # let y = _y.view();
+//! use ml_rs::regression::linear::LinearRegression;
+//! use ml_rs::regression::Regressor;
+//! let mut lm = LinearRegression::new();
+//! // Fit a linear regression model to the data, unwrapping to check for errors
+//! lm.fit(x, y).unwrap();
+//! // Get the predicted values for `x` given by the regression model
+//! let y_pred = lm.predict(x);
+//! ```
+//! - Measure the performance of a model:
+//! ```
+//! # let _y = array![3.0, 6.0];
+//! # let y = _y.view();
+//! # let y_pred = array![3.0, 6.0];
+//! use ml_rs::metrics::accuracy_score;
+//! // We own `y_pred`, so we need to return a view, which means we
+//! // don't consume it when calculating accuracy.
+//! let train_accuracy = accuracy_score(y, y_pred.view());
+//! println!("Training set accuracy: {}%", train_accuracy * 100.0);
+//! ```
+//! Classification works very similarly to regression: for an example,
+//! see the [`classification`] module.
+
 #[warn(missing_docs)]
 
 /// A variety of supervised classification models to use with numeric data.

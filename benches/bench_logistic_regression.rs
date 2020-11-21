@@ -1,5 +1,5 @@
 use criterion::{criterion_group, criterion_main, Criterion};
-use ml_rs::classification::linear::{IRLSSolver, BFGSSolver, LogisticRegression};
+use ml_rs::classification::linear::{BFGSSolver, IRLSSolver, LogisticRegression};
 use ml_rs::classification::Classifier;
 use ndarray::{Array1, Array2};
 use ndarray_rand::rand_distr::Uniform;
