@@ -7,8 +7,8 @@ pub mod binary;
 /// Calculate the accuracy of an array of predictions `y_pred` from a
 /// classifier against the true values given in `y_true`.
 ///
-/// The **accuracy** of a classifier is the percentage of labels that are
-/// correct in the prediction array `y_pred`. It lies in $[0, 1]$, with 1.0
+/// The **accuracy** of a classifier is the percentage of predictions that are
+/// correct in the array `y_pred`. It lies in $[0, 1]$, with 1.0
 /// representing perfect accuracy.
 ///
 /// # Arguments
@@ -17,7 +17,7 @@ pub mod binary;
 /// generated, for example, through `classifier.predict()`).
 ///
 /// `y_true` and `y_pred` must have the same length.
-pub fn accuracy_score(y_true: ArrayView1<usize>, y_pred: ArrayView1<usize>) -> f64 {
+pub fn accuracy_score<T: PartialEq>(y_true: ArrayView1<T>, y_pred: ArrayView1<T>) -> f64 {
     let n_true = y_true.len();
     let n_pred = y_pred.len();
     if n_true != n_pred {
@@ -40,7 +40,7 @@ pub fn accuracy_score(y_true: ArrayView1<usize>, y_pred: ArrayView1<usize>) -> f
 #[cfg(test)]
 mod tests {
     use super::accuracy_score;
-    use ndarray::array;
+    use ndarray::{Array1, array};
 
     #[test]
     fn test_accuracy_none_equal() {
@@ -80,8 +80,8 @@ mod tests {
         expected = "`y_true` has length zero. Ensure that `y_true` has at least one prediction."
     )]
     fn test_accuracy_no_preds() {
-        let y_true = array![];
-        let y_pred = array![];
+        let y_true: Array1<f64> = array![];
+        let y_pred: Array1<f64> = array![];
         accuracy_score(y_true.view(), y_pred.view());
     }
 }

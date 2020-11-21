@@ -14,6 +14,7 @@
 //! - [Netlib](https://www.netlib.org/)
 //! - [OpenBLAS](https://www.openblas.net/)
 //! - [Intel MKL](https://software.intel.com/content/www/us/en/develop/tools/math-kernel-library.html).
+//!
 //! You can choose which library you wish to link to. Roughly speaking, you
 //! should expect Netlib to be slower than the other two choices, and if you
 //! are deploying on Intel processors, MKL is likely to perform best (though
@@ -67,6 +68,7 @@
 //! ```
 //! - Measure the performance of a model:
 //! ```
+//! # use ndarray::array;
 //! # let _y = array![3.0, 6.0];
 //! # let y = _y.view();
 //! # let y_pred = array![3.0, 6.0];
