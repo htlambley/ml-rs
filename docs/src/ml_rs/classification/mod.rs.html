@@ -418,13 +418,13 @@
 <span class="doccomment">///</span>
 <span class="doccomment">/// # Examples</span>
 <span class="doccomment">/// ```no_run</span>
-<span class="doccomment">/// use ml_rs::classification::linear::LogisticRegression;</span>
+<span class="doccomment">/// use ml_rs::classification::linear::{BFGSSolver, LogisticRegression};</span>
 <span class="doccomment">/// use ml_rs::classification::{Classifier, ProbabilityBinaryClassifier};</span>
 <span class="doccomment">/// use ndarray::array;</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// let x = array![[1.0, 2.0], [3.0, 4.0]];</span>
 <span class="doccomment">/// let y = array![0, 1];</span>
-<span class="doccomment">/// let mut clf = LogisticRegression::new();</span>
+<span class="doccomment">/// let mut clf = LogisticRegression::&lt;BFGSSolver&gt;::default();</span>
 <span class="doccomment">/// clf.fit(x.view(), y.view());</span>
 <span class="doccomment">/// let y_prob = clf.predict_probability(x.view());</span>
 <span class="doccomment">/// ```</span>

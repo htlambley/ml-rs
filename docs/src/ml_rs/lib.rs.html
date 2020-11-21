@@ -210,81 +210,79 @@
 <span id="190">190</span>
 <span id="191">191</span>
 <span id="192">192</span>
-<span id="193">193</span>
-<span id="194">194</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="attribute">#[<span class="ident">warn</span>(<span class="ident">missing_docs</span>)]</span>
 
-<span class="doccomment">/// A variety of supervised classification models to use with numeric data. </span>
+<span class="doccomment">/// A variety of supervised classification models to use with numeric data.</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// Classification tasks aim to construct a model </span>
+<span class="doccomment">/// Classification tasks aim to construct a model</span>
 <span class="doccomment">/// $h \colon \mathcal{X} \to \\{0, 1, \dots, n - 1\\}$ to distinguish between</span>
 <span class="doccomment">/// $n$ classes of data from the data space $\mathcal{X}$, which is typically</span>
-<span class="doccomment">/// $\mathbb{R}^m$. Classification is a *supervised learning* task which </span>
+<span class="doccomment">/// $\mathbb{R}^m$. Classification is a *supervised learning* task which</span>
 <span class="doccomment">/// requires some pre-labelled training data sampled independently from</span>
 <span class="doccomment">/// the data distribution.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// # Context</span>
-<span class="doccomment">/// When designing a classifier, we start with some training data </span>
+<span class="doccomment">/// When designing a classifier, we start with some training data</span>
 <span class="doccomment">/// $(X_1, Y_1), \dots, (X_p, Y_p)$, and choose a *model*, which determines the</span>
-<span class="doccomment">/// collection $\mathcal{H}$ of classifiers that we want to choose from. </span>
-<span class="doccomment">/// Generally, we then proceed by trying to find the classifier in </span>
+<span class="doccomment">/// collection $\mathcal{H}$ of classifiers that we want to choose from.</span>
+<span class="doccomment">/// Generally, we then proceed by trying to find the classifier in</span>
 <span class="doccomment">/// $\mathcal{H}$ that minimises the error over the training data, using some</span>
 <span class="doccomment">/// suitable algorithm. We then evaluate the performance of the model on some</span>
-<span class="doccomment">/// new data sampled from the data distribution in order to estimate the </span>
-<span class="doccomment">/// generalisation error. </span>
+<span class="doccomment">/// new data sampled from the data distribution in order to estimate the</span>
+<span class="doccomment">/// generalisation error.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// This library supports the procedure by providing several models, listed</span>
 <span class="doccomment">/// below, which can be fit on data, and some tools in the `metrics` module</span>
 <span class="doccomment">/// to evaluate the performance of models on new data. The steps to take are:</span>
-<span class="doccomment">/// - Load the dataset into memory as a *data matrix* $X$ and an array of </span>
+<span class="doccomment">/// - Load the dataset into memory as a *data matrix* $X$ and an array of</span>
 <span class="doccomment">///   *labels* $y$.</span>
-<span class="doccomment">/// - Choose a suitable model and fit it (see the `Classifier` trait) on </span>
+<span class="doccomment">/// - Choose a suitable model and fit it (see the `Classifier` trait) on</span>
 <span class="doccomment">///   *training data*.</span>
 <span class="doccomment">/// - Use a scoring function from `metrics` such as the accuracy score to</span>
 <span class="doccomment">///   evaluate the performance on some *test data* that is distinct from</span>
 <span class="doccomment">///   the training data.</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// An overview of model selection can be found in \[1\]. Bibliographic </span>
+<span class="doccomment">/// An overview of model selection can be found in \[1\]. Bibliographic</span>
 <span class="doccomment">/// references to the models provided by the library are provided where</span>
 <span class="doccomment">/// appropriate in the documentation of the respective classifier.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// ## Statistical Learning Theory</span>
-<span class="doccomment">/// This section can freely be omitted, but provides interesting mathematical </span>
+<span class="doccomment">/// This section can freely be omitted, but provides interesting mathematical</span>
 <span class="doccomment">/// formalism which explains why the procedures we use are justified.</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// We begin with a data space $\mathcal{X}$, and the corresponding *target </span>
+<span class="doccomment">/// We begin with a data space $\mathcal{X}$, and the corresponding *target</span>
 <span class="doccomment">/// space* $\mathcal{Y} = \\{0, 1, \dots, n - 1\\}$. We assume that the data</span>
 <span class="doccomment">/// pairs $(x, y) \in \mathcal{X} \times \mathcal{Y}$ emerge frome some</span>
 <span class="doccomment">/// probability disribution $\mathcal{P}$ on $\mathcal{X} \times \mathcal{Y}$,</span>
 <span class="doccomment">/// and that the training data are *independent and identically distributed*</span>
-<span class="doccomment">/// (i.i.d.) samples from $\mathcal{P}$. The goal is to learn the label of </span>
+<span class="doccomment">/// (i.i.d.) samples from $\mathcal{P}$. The goal is to learn the label of</span>
 <span class="doccomment">/// any sample $x \in \mathcal{X}$: in other words, we would like to know</span>
 <span class="doccomment">/// the conditional probability $\mathbb{P} [ Y = y \mid X \in A]$ for any</span>
 <span class="doccomment">/// subset $A$ of $\mathcal{X}$. We would expect that if the training data</span>
-<span class="doccomment">/// are i.i.d., then we should be able to make a good estimation of the </span>
+<span class="doccomment">/// are i.i.d., then we should be able to make a good estimation of the</span>
 <span class="doccomment">/// conditional probability if we have sufficient data.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// We choose a function to measure the *risk*, $R(h)$, that a given classifier</span>
 <span class="doccomment">/// $h$ makes an error. This is taken over the entire distribution with respect</span>
-<span class="doccomment">/// to some *loss function*, so if $(X, Y)$ are sampled from $\mathcal{P}$, </span>
+<span class="doccomment">/// to some *loss function*, so if $(X, Y)$ are sampled from $\mathcal{P}$,</span>
 <span class="doccomment">/// then</span>
 <span class="doccomment">/// $$ R(h) = \mathbb{E} [ L(h(X), Y) ]. $$</span>
-<span class="doccomment">/// We can estimate the risk over the entire distribution by the *empirical </span>
+<span class="doccomment">/// We can estimate the risk over the entire distribution by the *empirical</span>
 <span class="doccomment">/// risk*, given some training data $T = \\{ (X_1, Y_1), \dots, (X_p, Y_p) \\}$:</span>
 <span class="doccomment">/// $$R_\mathrm{E}(h; T) = \frac1p \sum_{i = 1}^p L(h(X_i), Y_i).$$</span>
-<span class="doccomment">/// Provided that the training data are indeed i.i.d., the expected value of </span>
+<span class="doccomment">/// Provided that the training data are indeed i.i.d., the expected value of</span>
 <span class="doccomment">/// the empirical risk is the (generalisation) risk $R(h)$, so the empirical</span>
 <span class="doccomment">/// risk serves as an estimate of generalisation error. If the data are not</span>
-<span class="doccomment">/// i.i.d. then the empirical risk may not be a good estimate of the </span>
+<span class="doccomment">/// i.i.d. then the empirical risk may not be a good estimate of the</span>
 <span class="doccomment">/// true risk, leading to poor performance on unseen data.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// Choosing a model amounts to selecting a *hypothesis class* $\mathcal{H}$,</span>
 <span class="doccomment">/// which is a collection of functions which we consider as candidates. The</span>
-<span class="doccomment">/// *empirical risk minimisation* problem is to find the classifier in </span>
+<span class="doccomment">/// *empirical risk minimisation* problem is to find the classifier in</span>
 <span class="doccomment">/// $\mathcal{H}$ that best fits the data:</span>
 <span class="doccomment">/// $$ \argmin_{h \in \mathcal{H}} R_\mathrm{E}(h; T). $$</span>
-<span class="doccomment">/// </span>
+<span class="doccomment">///</span>
 <span class="doccomment">/// The above is a standard characterisation of statistical learning theory.</span>
 <span class="doccomment">/// A much broader book on the topic is \[2\].</span>
 <span class="doccomment">///</span>
@@ -298,24 +296,22 @@
 <span class="doccomment">/// appropriate where a linear function of the features would be a good</span>
 <span class="doccomment">/// predictor of the probability of lying in the positive class.</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// - [`classification::linear::LogisticRegression`]</span>
-<span class="doccomment">/// - [`classification::linear::IRLSLogisticRegression`].</span>
+<span class="doccomment">/// - [`classification::linear::LogisticRegression`].</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// These classifiers differ only in the algorithm used to fit the model, and</span>
-<span class="doccomment">/// depending on configuration, one may be significantly faster than the other</span>
-<span class="doccomment">/// during the fitting process.</span>
+<span class="doccomment">/// Multiple solvers are provided, as can be viewed on the main documentation</span>
+<span class="doccomment">/// page; it is advisable to try all the options to see which perform best.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// # Examples</span>
-<span class="doccomment">/// For examples, see the classifiers above, which are provided with </span>
+<span class="doccomment">/// For examples, see the classifiers above, which are provided with</span>
 <span class="doccomment">/// usage examples.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// # References</span>
 <span class="doccomment">/// \[1\] Hastie et al, *The Elements of Statistical Learning: Data Mining,</span>
-<span class="doccomment">/// Inference and Prediction*, Springer, New York, NY, 2001, 1st ed, </span>
+<span class="doccomment">/// Inference and Prediction*, Springer, New York, NY, 2001, 1st ed,</span>
 <span class="doccomment">/// ch. 7.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// \[2\] Vapnik, *The Nature of Statistical Learning Theory*, Springer, New</span>
-<span class="doccomment">/// York, NY, 1999, 1st ed. </span>
+<span class="doccomment">/// York, NY, 1999, 1st ed.</span>
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">classification</span>;
 
 <span class="doccomment">/// A collection of metrics to measure the performance of classification</span>
@@ -327,30 +323,30 @@
 <span class="doccomment">/// Utilities including loading data from CSV files to arrays to input into</span>
 <span class="doccomment">/// models.</span>
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">preprocessing</span>;
-<span class="doccomment">/// A collection of supervised regression models to predict continuous </span>
+<span class="doccomment">/// A collection of supervised regression models to predict continuous</span>
 <span class="doccomment">/// variables from data.</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// Regression tasks look to construct a regressor </span>
+<span class="doccomment">/// Regression tasks look to construct a regressor</span>
 <span class="doccomment">/// $h \colon \mathcal{X} \to \mathcal{Y}$, where instead of $\mathcal{Y}$</span>
 <span class="doccomment">/// being a finite set as in classification, we have $\mathcal{Y}$ being a</span>
 <span class="doccomment">/// continuum, e.g. an interval $[a, b]$.</span>
-<span class="doccomment">/// </span>
+<span class="doccomment">///</span>
 <span class="doccomment">/// # Context</span>
 <span class="doccomment">/// The context is largely the same as in the classification case (and reading</span>
-<span class="doccomment">/// the [`classification`] module documentation should prove helpful). The </span>
+<span class="doccomment">/// the [`classification`] module documentation should prove helpful). The</span>
 <span class="doccomment">/// main change is the the space $\mathcal{Y}$ which is now continuous, so some</span>
 <span class="doccomment">/// classification models do not have corresponding regression models, whereas</span>
-<span class="doccomment">/// others (such as least squares regression) find applications in both </span>
+<span class="doccomment">/// others (such as least squares regression) find applications in both</span>
 <span class="doccomment">/// classification and regression.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// # Models</span>
-<span class="doccomment">/// Currently, the following regressors are supported. </span>
+<span class="doccomment">/// Currently, the following regressors are supported.</span>
 <span class="doccomment">/// ## Linear Regression</span>
 <span class="doccomment">/// These models are appropriate when the target $Y$ is believed to be some</span>
 <span class="doccomment">/// linear function $f(X)$ of the feature vector $X$.</span>
 <span class="doccomment">/// - [`regression::linear::LinearRegression`].</span>
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">regression</span>;
-<span class="doccomment">/// Procedures to perform scaling, dimensionality reduction and other </span>
+<span class="doccomment">/// Procedures to perform scaling, dimensionality reduction and other</span>
 <span class="doccomment">/// transformations on the data before input into a model.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// # Details</span>
@@ -365,7 +361,7 @@
 <span class="doccomment">/// certain components of each sample vector, or we could perform a more</span>
 <span class="doccomment">/// nuanced transformation. Among the most famous dimensionality reduction</span>
 <span class="doccomment">/// procedures is *principal component analysis* as proposed by Pearson (1901).</span>
-<span class="doccomment">/// This is implemented in ml-rs as [`transformation::pca::PrincipalComponentAnalysis`]. </span>
+<span class="doccomment">/// This is implemented in ml-rs as [`transformation::pca::PrincipalComponentAnalysis`].</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// # Prior Art</span>
 <span class="doccomment">/// The idea of a common API for classification, regression and transformation</span>
@@ -379,16 +375,16 @@
 <span class="kw">use</span> <span class="ident">thiserror</span>::<span class="ident">Error</span>;
 
 <span class="doccomment">/// The main error type which represents an error in a model or transformer.</span>
-<span class="doccomment">/// As there are many commonalities between classifiers, regressors and </span>
+<span class="doccomment">/// As there are many commonalities between classifiers, regressors and</span>
 <span class="doccomment">/// transformers, this general error is returned during the use of any of</span>
 <span class="doccomment">/// these objects.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Error</span>)]</span>
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">Error</span> {
-    <span class="doccomment">/// A model or transformer that required fitting was not fit before trying </span>
+    <span class="doccomment">/// A model or transformer that required fitting was not fit before trying</span>
     <span class="doccomment">/// to use (e.g. calling `predict()` before `fit()`).</span>
     <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;attempted to use before calling `fit()`: try fitting with appropriate training data before usage&quot;</span>)]</span>
     <span class="ident">UseBeforeFit</span>,
-    <span class="doccomment">/// The training data provided was invalid in some sense. Check the </span>
+    <span class="doccomment">/// The training data provided was invalid in some sense. Check the</span>
     <span class="doccomment">/// assumptions for the model used. Common problems are:</span>
     <span class="doccomment">/// - the data matrix `x` and the label array `y` are different lengths</span>
     <span class="doccomment">/// - the data matrix `x` or label array `y` are empty.</span>
@@ -396,13 +392,13 @@
     <span class="ident">InvalidTrainingData</span>,
     <span class="doccomment">/// The model being used requires an optimisation problem to be solved,</span>
     <span class="doccomment">/// but when passing the problem to `argmin`, an error occurred.</span>
-    <span class="doccomment">/// This is most likely an internal error that is not caused by the </span>
+    <span class="doccomment">/// This is most likely an internal error that is not caused by the</span>
     <span class="doccomment">/// user input: file an issue if this occurs without obvious cause.</span>
     <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;attempted to solve optimisation problem, but the optimiser encountered an error&quot;</span>)]</span>
     <span class="ident">OptimiserError</span>,
     <span class="doccomment">/// The model had an error during the fitting process. Common problems are:</span>
     <span class="doccomment">/// - the fitting process involved a call to LAPACK which failed.</span>
-    <span class="doccomment">/// </span>
+    <span class="doccomment">///</span>
     <span class="doccomment">/// This may be an internal error, or a problem on your system.</span>
     <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;an error occurred during the fitting process&quot;</span>)]</span>
     <span class="ident">FittingError</span>,

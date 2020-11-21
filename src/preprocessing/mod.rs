@@ -7,13 +7,13 @@ use std::fs::File;
 /// Loads data from a CSV file to an `Array2<f64>` for use in transformers
 /// and models.
 ///
-/// This assumes that the CSV file you wish to load from is a homogeneous 
+/// This assumes that the CSV file you wish to load from is a homogeneous
 /// table of float values that can be interpreted as a matrix of `f64`.
 ///
 /// # Notes
 /// This can be considered a very rough equivalent to the `pandas` function
 /// `read_csv`, with the added restriction that, as we only support homogeneous
-/// arrays, all values must be float, and no column names are supported. 
+/// arrays, all values must be float, and no column names are supported.
 ///
 /// # Examples
 /// ```no_run
@@ -24,7 +24,7 @@ use std::fs::File;
 /// let csv_file = File::open("test.csv").unwrap();
 /// // Create a `CsvReader` from the file reference.
 /// let reader = CsvReader::new(&csv_file);
-/// // The expected number of rows and columns must be specified when reading 
+/// // The expected number of rows and columns must be specified when reading
 /// // from CSV.
 /// let n_rows = 3;
 /// let n_cols = 4;
@@ -46,7 +46,7 @@ impl<'a> CsvReader<'a> {
         }
     }
 
-    /// Reads the CSV file to an `Array2<f64>`. 
+    /// Reads the CSV file to an `Array2<f64>`.
     ///
     /// # Panics
     /// Panics if the CSV is not valid, or contains an incorrect number of

@@ -6,7 +6,7 @@ use ndarray::ArrayView1;
 ///
 /// Precision and recall only make sense for **binary classification**
 /// problems, so `y_true` and `y_pred` must contain only labels in $\\{0, 1\\}$.
-/// The class with label 1 will be regarded as the "positive" class, and the 
+/// The class with label 1 will be regarded as the "positive" class, and the
 /// class with label 0 will be regarded as the "negative" class.
 ///
 /// # Arguments

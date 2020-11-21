@@ -109,13 +109,13 @@
 <span class="doccomment">/// Loads data from a CSV file to an `Array2&lt;f64&gt;` for use in transformers</span>
 <span class="doccomment">/// and models.</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// This assumes that the CSV file you wish to load from is a homogeneous </span>
+<span class="doccomment">/// This assumes that the CSV file you wish to load from is a homogeneous</span>
 <span class="doccomment">/// table of float values that can be interpreted as a matrix of `f64`.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// # Notes</span>
 <span class="doccomment">/// This can be considered a very rough equivalent to the `pandas` function</span>
 <span class="doccomment">/// `read_csv`, with the added restriction that, as we only support homogeneous</span>
-<span class="doccomment">/// arrays, all values must be float, and no column names are supported. </span>
+<span class="doccomment">/// arrays, all values must be float, and no column names are supported.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// # Examples</span>
 <span class="doccomment">/// ```no_run</span>
@@ -126,7 +126,7 @@
 <span class="doccomment">/// let csv_file = File::open(&quot;test.csv&quot;).unwrap();</span>
 <span class="doccomment">/// // Create a `CsvReader` from the file reference.</span>
 <span class="doccomment">/// let reader = CsvReader::new(&amp;csv_file);</span>
-<span class="doccomment">/// // The expected number of rows and columns must be specified when reading </span>
+<span class="doccomment">/// // The expected number of rows and columns must be specified when reading</span>
 <span class="doccomment">/// // from CSV.</span>
 <span class="doccomment">/// let n_rows = 3;</span>
 <span class="doccomment">/// let n_cols = 4;</span>
@@ -148,7 +148,7 @@
         }
     }
 
-    <span class="doccomment">/// Reads the CSV file to an `Array2&lt;f64&gt;`. </span>
+    <span class="doccomment">/// Reads the CSV file to an `Array2&lt;f64&gt;`.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// # Panics</span>
     <span class="doccomment">/// Panics if the CSV is not valid, or contains an incorrect number of</span>

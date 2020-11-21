@@ -102,13 +102,13 @@ pub trait Classifier {
 ///
 /// # Examples
 /// ```no_run
-/// use ml_rs::classification::linear::LogisticRegression;
+/// use ml_rs::classification::linear::{BFGSSolver, LogisticRegression};
 /// use ml_rs::classification::{Classifier, ProbabilityBinaryClassifier};
 /// use ndarray::array;
 ///
 /// let x = array![[1.0, 2.0], [3.0, 4.0]];
 /// let y = array![0, 1];
-/// let mut clf = LogisticRegression::new();
+/// let mut clf = LogisticRegression::<BFGSSolver>::default();
 /// clf.fit(x.view(), y.view());
 /// let y_prob = clf.predict_probability(x.view());
 /// ```

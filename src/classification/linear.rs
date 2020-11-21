@@ -9,16 +9,75 @@ use ndarray_linalg::LeastSquaresSvd;
 use ndarray_rand::rand_distr::Uniform;
 use ndarray_rand::RandomExt;
 
-/// A classifier implementing the logistic regression model fit using an
-/// iteratively reweighted least squares (IRLS) method as described by
-/// Hastie et al.
+/// Represents a backend for the [`LogisticRegression`] classifier which
+/// calculates appropriate weights. See [`BFGSSolver`] and [`IRLSSolver`]
+/// for concrete implementations of this trait.
+pub trait LogisticRegressionSolver {
+    /// Given data matrix `x` and label array `y` (with labels converted to
+    /// float), calculate suitable weights according to the chosen algorithm.
+    fn fit_weights(&self, x: ArrayView2<f64>, y: ArrayView1<f64>) -> Result<Array1<f64>, Error>;
+}
+
+/// Solver for the [`LogisticRegression`] classifier implementing the
+/// Broyden–Fletcher–Goldfarb–Shanno (BFGS) method.
 ///
-/// # Model
-/// For a general description of the logistic regression model, see the
-/// `LogisticRegression` classifier. This model uses the same principle,
-/// and is still fit using maximum likelihood estimation. Instead of solving
-/// for the maximum likelihood estimator using gradient-based methods, this
-/// classifier uses a method known as *iteratively reweighted least squares*.
+/// This solver fits the model using *maximum likelihood estimation* to find
+/// the optimal weights. There is no closed form to find the maximum likelihood
+/// estimator weights, so this solver obtains weights numerically using the
+/// Broyden–Fletcher–Goldfarb–Shanno (BFGS) algorithm. This is a quasi-Newton
+/// iterative method, and further details are available in \[1\].
+///
+/// The optimisation algorithm is handled by the `argmin` library.
+/// # References
+/// \[1\] Nocedal and Wright, *Numerical Optimization*, Springer, New York,
+/// NY, 2nd ed, 2006, pp. 136–144.
+#[derive(Clone, Debug)]
+pub struct BFGSSolver {
+    max_iter: u64,
+}
+
+impl Default for BFGSSolver {
+    fn default() -> BFGSSolver {
+        BFGSSolver { max_iter: 100 }
+    }
+}
+
+impl LogisticRegressionSolver for BFGSSolver {
+    fn fit_weights(&self, x: ArrayView2<f64>, y: ArrayView1<f64>) -> Result<Array1<f64>, Error> {
+        let cost = LogisticRegressionProblem {
+            train_x: x,
+            train_y: y,
+        };
+
+        let param_size = x.ncols();
+        // Set up a gradient descent using More–Thuente line search.
+        let line_search = MoreThuenteLineSearch::new();
+        let init_hessian = Array2::eye(param_size);
+        let solver = BFGS::new(init_hessian, line_search);
+        // Generate a random initial point in [-1, 1]^n and hope this is
+        // reasonable.
+        let x_0 = Array1::random(param_size, Uniform::new(-1.0, 1.0));
+        let executor = Executor::new(cost, solver, x_0).max_iters(self.max_iter);
+        // Execute the optimiser and save the best weights found.
+        executor
+            .run()
+            .map(|result| {
+                let state = result.state;
+                state.best_param.to_owned()
+            })
+            .map_err(|_| Error::OptimiserError)
+    }
+}
+
+/// Solver for the [`LogisticRegression`] classifier implementing the
+/// iteratively reweighted least squares (IRLS) method.
+///
+/// This solver attempts to obtain a maximum likelihood estimator for the
+/// weights. In contrast to [`BFGSSolver`], this solver repeatedly solves
+/// a least squares problem (which has a closed form solution) in order
+/// to obtain an approximation for the weights.
+///
+/// # Details
 ///
 /// Let:
 /// - $X$ be the data matrix with corresponding labels $y$;
@@ -45,38 +104,19 @@ use ndarray_rand::RandomExt;
 /// Hastie et al, *The Elements of Statistical Learning: Data Mining,
 /// Inference and Prediction*, Springer, New York, NY, 2001, 1st ed,
 /// pp. 95–100.
-pub struct IRLSLogisticRegression {
-    weights: Option<Array1<f64>>,
-    /// The maximum number of iterations of the iteratively reweighted least
-    /// squares algorithm used when fitting to the data. The default is 10.
-    pub max_iter: u64,
+#[derive(Clone, Debug)]
+pub struct IRLSSolver {
+    max_iter: usize,
 }
 
-impl IRLSLogisticRegression {
-    /// Creates a new `IRLSLogisticRegression` classifier without any weights,
-    /// which may then be trained using `Classifier::fit()`.
-    pub fn new() -> IRLSLogisticRegression {
-        IRLSLogisticRegression {
-            weights: None,
-            max_iter: 10,
-        }
+impl Default for IRLSSolver {
+    fn default() -> IRLSSolver {
+        IRLSSolver { max_iter: 10 }
     }
 }
 
-impl Default for IRLSLogisticRegression {
-    fn default() -> IRLSLogisticRegression {
-        Self::new()
-    }
-}
-
-impl Classifier for IRLSLogisticRegression {
-    fn fit(&mut self, x: ArrayView2<f64>, y: ArrayView1<usize>) -> Result<(), Error> {
-        if x.nrows() != y.len() || !labels_binary(y) {
-            return Err(Error::InvalidTrainingData);
-        }
-
-        let y: Array1<f64> = y.iter().map(|v| *v as f64).collect();
-
+impl LogisticRegressionSolver for IRLSSolver {
+    fn fit_weights(&self, x: ArrayView2<f64>, y: ArrayView1<f64>) -> Result<Array1<f64>, Error> {
         let mut weights: Array1<f64> = Array1::zeros(x.ncols());
         for _ in 0..self.max_iter {
             let xw: Array1<f64> = x.dot(&weights);
@@ -119,34 +159,16 @@ impl Classifier for IRLSLogisticRegression {
                 .solution;
             weights = sol;
         }
-
-        self.weights = Some(weights);
-        Ok(())
-    }
-
-    fn predict(&self, x: ArrayView2<f64>) -> Result<Array1<usize>, Error> {
-        let probabilties = self.predict_probability(x)?;
-        Ok(probabilties.iter().map(|x| (x.round() as usize)).collect())
-    }
-}
-
-impl ProbabilityBinaryClassifier for IRLSLogisticRegression {
-    fn predict_probability(&self, x: ArrayView2<f64>) -> Result<Array1<f64>, Error> {
-        // TODO: return an iterator so the consumer can map if necessary
-        if let Some(weights) = &self.weights {
-            // Estimate the probability for each sample, and return 1 if p > 0.5, 0 otherwise.
-            let mut xw = x.dot(weights);
-            xw.par_mapv_inplace(sigmoid);
-            Ok(xw)
-        } else {
-            Err(Error::UseBeforeFit)
-        }
+        Ok(weights)
     }
 }
 
 /// A classifier implementing the logistic regression model. Logistic
 /// regression models can be used for binary classification problems and may
 /// be extended through multinomial logistic regression.
+///
+/// **Important**: you need to choose the solver you want to use in order
+/// to use this model. See the 'Fitting' section below for help.
 ///
 /// # Model
 /// This model is appropriate if you have a collection of samples `x`
@@ -155,34 +177,47 @@ impl ProbabilityBinaryClassifier for IRLSLogisticRegression {
 ///
 /// Roughly speaking, the logistic regression model tries to fit a linear
 /// model to predict the probability of each class. As we require probability
-/// estimates to be in [0, 1], the linear model is used to predict the
+/// estimates to be in $[0, 1]$, the linear model is used to predict the
 /// *log-odds* instead.
 ///
-/// The model is fit using *maximum likelihood estimation* to find the optimal
-/// weights. There is no closed form to find the maximum likelihood estimator
-/// weights so this is solved numerically using the BFGS optimiser from
-/// `argmin`, which is a quasi-Newton optimisation method using second-order
-/// derivatives.
+/// ## Fitting
+/// Multiple methods of fitting `LogisticRegression` are provided, so you can
+/// choose whichever one you prefer or performs best on your system. The
+/// current choices are:
+/// - [`BFGSSolver`]
+///
+/// Numerically obtains the weights using a quasi-Newton iterative algorithm,
+/// known as the Broyden–Fletcher–Goldfarb–Shanno (BFGS) algorithm.
+///
+/// - [`IRLSSolver`]
+///
+/// Obtains weights using a procedure known as iteratively reweighted
+/// least squares, as given by Hastie et al.
+///
+/// In general, [`IRLSSolver`] is slightly faster, but check this on your
+/// system as it may depend on the BLAS/LAPACK you link to.
 ///
 /// # Examples
-/// Fitting a logistic regression classifier and making a prediction.
+/// Fitting a logistic regression classifier and making a prediction, using the
+/// BFGS solver.
 /// ```no_run
 /// use ndarray::array;
 /// use ml_rs::classification::Classifier;
-/// use ml_rs::classification::linear::LogisticRegression;
+/// use ml_rs::classification::linear::{BFGSSolver, LogisticRegression};
 ///
 /// let x = array![[1.0, 2.0, 3.0], [1.0, 4.0, 3.0]];
 /// let y = array![0, 1];
 ///
-/// let mut clf = LogisticRegression::new();
+/// let solver = BFGSSolver::default();
+/// let mut clf = LogisticRegression::new(solver);
 /// clf.fit(x.view(), y.view()).unwrap();
 ///
 /// let x_test = array![[1.0, 2.0, 3.0]];
 /// assert_eq!(clf.predict(x_test.view()).unwrap(), array![0]);
 /// ```
-#[derive(Clone)]
-pub struct LogisticRegression {
+pub struct LogisticRegression<T: LogisticRegressionSolver> {
     weights: Option<Array1<f64>>,
+    solver: T,
     /// The maximum number of iterations of the BFGS algorithm to apply
     /// when fitting to the data. The default is 100. Larger values will
     /// tend to lead to better fit classifiers, but increase the time needed to
@@ -250,59 +285,36 @@ impl<'a, 'b> ArgminOp for LogisticRegressionProblem<'a, 'b> {
     }
 }
 
-impl LogisticRegression {
+impl<T: LogisticRegressionSolver> LogisticRegression<T> {
     /// Creates a new `LogisticRegression` classifier which must be fit on the
     /// data in order to find suitable weights.
-    pub fn new() -> LogisticRegression {
+    pub fn new(solver: T) -> LogisticRegression<T> {
         LogisticRegression {
             weights: None,
             max_iter: 100,
+            solver,
         }
     }
 }
 
-impl Default for LogisticRegression {
-    fn default() -> LogisticRegression {
-        Self::new()
+impl<T: LogisticRegressionSolver + Default> Default for LogisticRegression<T> {
+    fn default() -> LogisticRegression<T> {
+        let solver = T::default();
+        Self::new(solver)
     }
 }
 
-impl Classifier for LogisticRegression {
+impl<T: LogisticRegressionSolver> Classifier for LogisticRegression<T> {
     fn fit(&mut self, x: ArrayView2<f64>, y: ArrayView1<usize>) -> Result<(), Error> {
         if x.nrows() != y.len() || !labels_binary(y) {
             return Err(Error::InvalidTrainingData);
         }
 
-        // Map y to an Array<f64> for convenience when defining the log-
-        // likelihood and gradient functions, and define the optimisation
-        // problem.
+        // Map y to an Array<f64> for convenience in the fitting process.
         let train_y = y.mapv(|x| x as f64);
-        let best_param: Result<Array1<f64>, Error> = {
-            let cost = LogisticRegressionProblem {
-                train_x: x,
-                train_y: train_y.view(),
-            };
-
-            let param_size = x.ncols();
-            // Set up a gradient descent using More–Thuente line search.
-            let line_search = MoreThuenteLineSearch::new();
-            let init_hessian = Array2::eye(param_size);
-            let solver = BFGS::new(init_hessian, line_search);
-            // Generate a random initial point in [-1, 1]^n and hope this is
-            // reasonable.
-            let x_0 = Array1::random(param_size, Uniform::new(-1.0, 1.0));
-            let executor = Executor::new(cost, solver, x_0).max_iters(self.max_iter);
-            // Execute the optimiser and save the best weights found.
-            executor
-                .run()
-                .map(|result| {
-                    let state = result.state;
-                    state.best_param.to_owned()
-                })
-                .map_err(|_| Error::OptimiserError)
-        };
-
-        self.weights = Some(best_param?);
+        // Pass to internal solver and obtain best weights.
+        let best_param = self.solver.fit_weights(x, train_y.view())?;
+        self.weights = Some(best_param);
         Ok(())
     }
 
@@ -312,7 +324,7 @@ impl Classifier for LogisticRegression {
     }
 }
 
-impl ProbabilityBinaryClassifier for LogisticRegression {
+impl<T: LogisticRegressionSolver> ProbabilityBinaryClassifier for LogisticRegression<T> {
     fn predict_probability(&self, x: ArrayView2<f64>) -> Result<Array1<f64>, Error> {
         // TODO: return an iterator so the consumer can map if necessary
         if let Some(weights) = &self.weights {
@@ -335,14 +347,15 @@ fn sigmoid(x: f64) -> f64 {
 #[cfg(test)]
 mod test {
     use super::super::{Classifier, Error};
-    use super::{IRLSLogisticRegression, LogisticRegression};
+    use super::{BFGSSolver, IRLSSolver, LogisticRegression};
     use ndarray::{array, Array1, Array2};
     use ndarray_rand::rand_distr::Uniform;
     use ndarray_rand::RandomExt;
 
     #[test]
     fn test_unfit_logistic_regression() {
-        let clf = LogisticRegression::new();
+        let solver = BFGSSolver::default();
+        let clf = LogisticRegression::new(solver);
         let x = array![[1.0, 2.0], [3.0, 4.0]];
         match clf.predict(x.view()) {
             Err(Error::UseBeforeFit) => (),
@@ -352,7 +365,8 @@ mod test {
 
     #[test]
     fn test_logistic_regression_different_sizes() {
-        let mut clf = LogisticRegression::new();
+        let solver = BFGSSolver::default();
+        let mut clf = LogisticRegression::new(solver);
         let x = array![[1.0, 2.0], [3.0, 4.0]];
         let y = array![0];
         match clf.fit(x.view(), y.view()) {
@@ -363,7 +377,8 @@ mod test {
 
     #[test]
     fn test_fit_logistic_regression() {
-        let mut clf = LogisticRegression::new();
+        let solver = BFGSSolver::default();
+        let mut clf = LogisticRegression::new(solver);
         let x = array![[1.0, 2.0], [1.0, 3.0], [3.0, 4.0], [3.0, 5.0]];
         let y = array![0, 0, 1, 1];
         clf.fit(x.view(), y.view()).unwrap();
@@ -372,7 +387,8 @@ mod test {
 
     #[test]
     fn test_fit_logistic_regression_irls() {
-        let mut clf = IRLSLogisticRegression::new();
+        let solver = IRLSSolver::default();
+        let mut clf = LogisticRegression::new(solver);
         let x = array![[1.0, 2.0], [1.0, 3.0], [3.0, 4.0], [3.0, 5.0]];
         let y = array![0, 0, 1, 1];
         clf.fit(x.view(), y.view()).unwrap();
@@ -381,7 +397,8 @@ mod test {
 
     #[test]
     fn test_logistic_regression_non_binary_labels() {
-        let mut clf = LogisticRegression::new();
+        let solver = BFGSSolver::default();
+        let mut clf = LogisticRegression::new(solver);
         let x = array![[1.0, 2.0], [1.0, 3.0], [3.0, 4.0], [3.0, 5.0]];
         let y = array![0, 0, 1, 2];
         match clf.fit(x.view(), y.view()) {
@@ -392,7 +409,8 @@ mod test {
 
     #[test]
     fn test_single_logistic_regression() {
-        let mut clf = LogisticRegression::new();
+        let solver = BFGSSolver::default();
+        let mut clf = LogisticRegression::new(solver);
         let x = array![[1.0, 2.0, 3.0],];
         let y = array![0];
         clf.fit(x.view(), y.view()).unwrap();
@@ -401,7 +419,8 @@ mod test {
 
     #[test]
     fn test_fit_logistic_regression_random() {
-        let mut clf = LogisticRegression::new();
+        let solver = BFGSSolver::default();
+        let mut clf = LogisticRegression::new(solver);
         let n_rows = 2000;
         let n_features = 5;
         let x = Array2::random((n_rows, n_features), Uniform::new(-1.0, 1.0));
@@ -411,7 +430,8 @@ mod test {
 
     #[test]
     fn test_fit_logistic_regression_random_large() {
-        let mut clf = LogisticRegression::new();
+        let solver = BFGSSolver::default();
+        let mut clf = LogisticRegression::new(solver);
         let n_rows = 100000;
         let n_features = 5;
         let x = Array2::random((n_rows, n_features), Uniform::new(-1.0, 1.0));
@@ -421,7 +441,8 @@ mod test {
 
     #[test]
     fn test_fit_irls_logistic_regression_random_large() {
-        let mut clf = IRLSLogisticRegression::new();
+        let solver = IRLSSolver::default();
+        let mut clf = LogisticRegression::new(solver);
         let n_rows = 100000;
         let n_features = 5;
         let x = Array2::random((n_rows, n_features), Uniform::new(-1.0, 1.0));
@@ -431,7 +452,8 @@ mod test {
 
     #[test]
     fn test_unfit_irls_logistic_regression() {
-        let clf = IRLSLogisticRegression::new();
+        let solver = IRLSSolver::default();
+        let clf = LogisticRegression::new(solver);
         let x = array![[1.0, 2.0], [3.0, 4.0]];
         match clf.predict(x.view()) {
             Err(Error::UseBeforeFit) => (),

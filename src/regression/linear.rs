@@ -9,8 +9,8 @@ use ndarray_linalg::LeastSquaresSvd;
 /// This method is appropriate when you wish to model your response variable $Y$
 /// as a linear combination of the features,
 /// $$\hat{Y} = \alpha_1 X_1 + \dots + \alpha_n X_n,$$
-/// based on the hypothesis that each randomly drawn training sample 
-/// $(X_i, Y_i)$ is in fact of the form 
+/// based on the hypothesis that each randomly drawn training sample
+/// $(X_i, Y_i)$ is in fact of the form
 /// $$Y_i = \alpha_1 X_1 + ... + \alpha_n X_n + \varepsilon_i,$$
 /// for some random noise $\varepsilon_i$.
 ///
@@ -20,7 +20,7 @@ use ndarray_linalg::LeastSquaresSvd;
 /// and solving the least squares problem using the singular value
 /// decomposition of $X$.
 ///
-/// This model does not currently support an intercept term. For now, you can 
+/// This model does not currently support an intercept term. For now, you can
 /// add an additional feature to your data which is a constant 1, and this will
 /// allow the model to fit a suitable intercept term.
 ///
@@ -42,7 +42,7 @@ pub struct LinearRegression {
 }
 
 impl LinearRegression {
-    /// Creates a new `LinearRegression` model ready to be fit to training 
+    /// Creates a new `LinearRegression` model ready to be fit to training
     /// data.
     pub fn new() -> LinearRegression {
         LinearRegression { weights: None }

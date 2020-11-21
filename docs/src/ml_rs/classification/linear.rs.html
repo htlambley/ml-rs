@@ -459,6 +459,28 @@
 <span id="439">439</span>
 <span id="440">440</span>
 <span id="441">441</span>
+<span id="442">442</span>
+<span id="443">443</span>
+<span id="444">444</span>
+<span id="445">445</span>
+<span id="446">446</span>
+<span id="447">447</span>
+<span id="448">448</span>
+<span id="449">449</span>
+<span id="450">450</span>
+<span id="451">451</span>
+<span id="452">452</span>
+<span id="453">453</span>
+<span id="454">454</span>
+<span id="455">455</span>
+<span id="456">456</span>
+<span id="457">457</span>
+<span id="458">458</span>
+<span id="459">459</span>
+<span id="460">460</span>
+<span id="461">461</span>
+<span id="462">462</span>
+<span id="463">463</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">labels_binary</span>, <span class="ident">Classifier</span>, <span class="ident">ProbabilityBinaryClassifier</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">Error</span>;
@@ -471,16 +493,75 @@
 <span class="kw">use</span> <span class="ident">ndarray_rand</span>::<span class="ident">rand_distr</span>::<span class="ident">Uniform</span>;
 <span class="kw">use</span> <span class="ident">ndarray_rand</span>::<span class="ident">RandomExt</span>;
 
-<span class="doccomment">/// A classifier implementing the logistic regression model fit using an</span>
-<span class="doccomment">/// iteratively reweighted least squares (IRLS) method as described by</span>
-<span class="doccomment">/// Hastie et al.</span>
+<span class="doccomment">/// Represents a backend for the [`LogisticRegression`] classifier which</span>
+<span class="doccomment">/// calculates appropriate weights. See [`BFGSSolver`] and [`IRLSSolver`]</span>
+<span class="doccomment">/// for concrete implementations of this trait.</span>
+<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">LogisticRegressionSolver</span> {
+    <span class="doccomment">/// Given data matrix `x` and label array `y` (with labels converted to</span>
+    <span class="doccomment">/// float), calculate suitable weights according to the chosen algorithm.</span>
+    <span class="kw">fn</span> <span class="ident">fit_weights</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">x</span>: <span class="ident">ArrayView2</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>, <span class="ident">y</span>: <span class="ident">ArrayView1</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Array1</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span>;
+}
+
+<span class="doccomment">/// Solver for the [`LogisticRegression`] classifier implementing the</span>
+<span class="doccomment">/// Broyden–Fletcher–Goldfarb–Shanno (BFGS) method.</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// # Model</span>
-<span class="doccomment">/// For a general description of the logistic regression model, see the</span>
-<span class="doccomment">/// `LogisticRegression` classifier. This model uses the same principle,</span>
-<span class="doccomment">/// and is still fit using maximum likelihood estimation. Instead of solving</span>
-<span class="doccomment">/// for the maximum likelihood estimator using gradient-based methods, this</span>
-<span class="doccomment">/// classifier uses a method known as *iteratively reweighted least squares*.</span>
+<span class="doccomment">/// This solver fits the model using *maximum likelihood estimation* to find</span>
+<span class="doccomment">/// the optimal weights. There is no closed form to find the maximum likelihood</span>
+<span class="doccomment">/// estimator weights, so this solver obtains weights numerically using the</span>
+<span class="doccomment">/// Broyden–Fletcher–Goldfarb–Shanno (BFGS) algorithm. This is a quasi-Newton</span>
+<span class="doccomment">/// iterative method, and further details are available in \[1\].</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// The optimisation algorithm is handled by the `argmin` library.</span>
+<span class="doccomment">/// # References</span>
+<span class="doccomment">/// \[1\] Nocedal and Wright, *Numerical Optimization*, Springer, New York,</span>
+<span class="doccomment">/// NY, 2nd ed, 2006, pp. 136–144.</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">BFGSSolver</span> {
+    <span class="ident">max_iter</span>: <span class="ident">u64</span>,
+}
+
+<span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">BFGSSolver</span> {
+    <span class="kw">fn</span> <span class="ident">default</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">BFGSSolver</span> {
+        <span class="ident">BFGSSolver</span> { <span class="ident">max_iter</span>: <span class="number">100</span> }
+    }
+}
+
+<span class="kw">impl</span> <span class="ident">LogisticRegressionSolver</span> <span class="kw">for</span> <span class="ident">BFGSSolver</span> {
+    <span class="kw">fn</span> <span class="ident">fit_weights</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">x</span>: <span class="ident">ArrayView2</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>, <span class="ident">y</span>: <span class="ident">ArrayView1</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Array1</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="ident">cost</span> <span class="op">=</span> <span class="ident">LogisticRegressionProblem</span> {
+            <span class="ident">train_x</span>: <span class="ident">x</span>,
+            <span class="ident">train_y</span>: <span class="ident">y</span>,
+        };
+
+        <span class="kw">let</span> <span class="ident">param_size</span> <span class="op">=</span> <span class="ident">x</span>.<span class="ident">ncols</span>();
+        <span class="comment">// Set up a gradient descent using More–Thuente line search.</span>
+        <span class="kw">let</span> <span class="ident">line_search</span> <span class="op">=</span> <span class="ident">MoreThuenteLineSearch</span>::<span class="ident">new</span>();
+        <span class="kw">let</span> <span class="ident">init_hessian</span> <span class="op">=</span> <span class="ident">Array2</span>::<span class="ident">eye</span>(<span class="ident">param_size</span>);
+        <span class="kw">let</span> <span class="ident">solver</span> <span class="op">=</span> <span class="ident">BFGS</span>::<span class="ident">new</span>(<span class="ident">init_hessian</span>, <span class="ident">line_search</span>);
+        <span class="comment">// Generate a random initial point in [-1, 1]^n and hope this is</span>
+        <span class="comment">// reasonable.</span>
+        <span class="kw">let</span> <span class="ident">x_0</span> <span class="op">=</span> <span class="ident">Array1</span>::<span class="ident">random</span>(<span class="ident">param_size</span>, <span class="ident">Uniform</span>::<span class="ident">new</span>(<span class="op">-</span><span class="number">1.0</span>, <span class="number">1.0</span>));
+        <span class="kw">let</span> <span class="ident">executor</span> <span class="op">=</span> <span class="ident">Executor</span>::<span class="ident">new</span>(<span class="ident">cost</span>, <span class="ident">solver</span>, <span class="ident">x_0</span>).<span class="ident">max_iters</span>(<span class="self">self</span>.<span class="ident">max_iter</span>);
+        <span class="comment">// Execute the optimiser and save the best weights found.</span>
+        <span class="ident">executor</span>
+            .<span class="ident">run</span>()
+            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">result</span><span class="op">|</span> {
+                <span class="kw">let</span> <span class="ident">state</span> <span class="op">=</span> <span class="ident">result</span>.<span class="ident">state</span>;
+                <span class="ident">state</span>.<span class="ident">best_param</span>.<span class="ident">to_owned</span>()
+            })
+            .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">Error</span>::<span class="ident">OptimiserError</span>)
+    }
+}
+
+<span class="doccomment">/// Solver for the [`LogisticRegression`] classifier implementing the</span>
+<span class="doccomment">/// iteratively reweighted least squares (IRLS) method.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// This solver attempts to obtain a maximum likelihood estimator for the</span>
+<span class="doccomment">/// weights. In contrast to [`BFGSSolver`], this solver repeatedly solves</span>
+<span class="doccomment">/// a least squares problem (which has a closed form solution) in order</span>
+<span class="doccomment">/// to obtain an approximation for the weights.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// # Details</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// Let:</span>
 <span class="doccomment">/// - $X$ be the data matrix with corresponding labels $y$;</span>
@@ -507,38 +588,19 @@
 <span class="doccomment">/// Hastie et al, *The Elements of Statistical Learning: Data Mining,</span>
 <span class="doccomment">/// Inference and Prediction*, Springer, New York, NY, 2001, 1st ed,</span>
 <span class="doccomment">/// pp. 95–100.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">IRLSLogisticRegression</span> {
-    <span class="ident">weights</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Array1</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="doccomment">/// The maximum number of iterations of the iteratively reweighted least</span>
-    <span class="doccomment">/// squares algorithm used when fitting to the data. The default is 10.</span>
-    <span class="kw">pub</span> <span class="ident">max_iter</span>: <span class="ident">u64</span>,
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">IRLSSolver</span> {
+    <span class="ident">max_iter</span>: <span class="ident">usize</span>,
 }
 
-<span class="kw">impl</span> <span class="ident">IRLSLogisticRegression</span> {
-    <span class="doccomment">/// Creates a new `IRLSLogisticRegression` classifier without any weights,</span>
-    <span class="doccomment">/// which may then be trained using `Classifier::fit()`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">IRLSLogisticRegression</span> {
-        <span class="ident">IRLSLogisticRegression</span> {
-            <span class="ident">weights</span>: <span class="prelude-val">None</span>,
-            <span class="ident">max_iter</span>: <span class="number">10</span>,
-        }
+<span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">IRLSSolver</span> {
+    <span class="kw">fn</span> <span class="ident">default</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">IRLSSolver</span> {
+        <span class="ident">IRLSSolver</span> { <span class="ident">max_iter</span>: <span class="number">10</span> }
     }
 }
 
-<span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">IRLSLogisticRegression</span> {
-    <span class="kw">fn</span> <span class="ident">default</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">IRLSLogisticRegression</span> {
-        <span class="self">Self</span>::<span class="ident">new</span>()
-    }
-}
-
-<span class="kw">impl</span> <span class="ident">Classifier</span> <span class="kw">for</span> <span class="ident">IRLSLogisticRegression</span> {
-    <span class="kw">fn</span> <span class="ident">fit</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">x</span>: <span class="ident">ArrayView2</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>, <span class="ident">y</span>: <span class="ident">ArrayView1</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="kw">if</span> <span class="ident">x</span>.<span class="ident">nrows</span>() <span class="op">!</span><span class="op">=</span> <span class="ident">y</span>.<span class="ident">len</span>() <span class="op">|</span><span class="op">|</span> <span class="op">!</span><span class="ident">labels_binary</span>(<span class="ident">y</span>) {
-            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="ident">InvalidTrainingData</span>);
-        }
-
-        <span class="kw">let</span> <span class="ident">y</span>: <span class="ident">Array1</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">y</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">v</span><span class="op">|</span> <span class="kw-2">*</span><span class="ident">v</span> <span class="kw">as</span> <span class="ident">f64</span>).<span class="ident">collect</span>();
-
+<span class="kw">impl</span> <span class="ident">LogisticRegressionSolver</span> <span class="kw">for</span> <span class="ident">IRLSSolver</span> {
+    <span class="kw">fn</span> <span class="ident">fit_weights</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">x</span>: <span class="ident">ArrayView2</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>, <span class="ident">y</span>: <span class="ident">ArrayView1</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Array1</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">weights</span>: <span class="ident">Array1</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Array1</span>::<span class="ident">zeros</span>(<span class="ident">x</span>.<span class="ident">ncols</span>());
         <span class="kw">for</span> <span class="kw">_</span> <span class="kw">in</span> <span class="number">0</span>..<span class="self">self</span>.<span class="ident">max_iter</span> {
             <span class="kw">let</span> <span class="ident">xw</span>: <span class="ident">Array1</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">x</span>.<span class="ident">dot</span>(<span class="kw-2">&amp;</span><span class="ident">weights</span>);
@@ -581,34 +643,16 @@
                 .<span class="ident">solution</span>;
             <span class="ident">weights</span> <span class="op">=</span> <span class="ident">sol</span>;
         }
-
-        <span class="self">self</span>.<span class="ident">weights</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">weights</span>);
-        <span class="prelude-val">Ok</span>(())
-    }
-
-    <span class="kw">fn</span> <span class="ident">predict</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">x</span>: <span class="ident">ArrayView2</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Array1</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">probabilties</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">predict_probability</span>(<span class="ident">x</span>)<span class="question-mark">?</span>;
-        <span class="prelude-val">Ok</span>(<span class="ident">probabilties</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">x</span><span class="op">|</span> (<span class="ident">x</span>.<span class="ident">round</span>() <span class="kw">as</span> <span class="ident">usize</span>)).<span class="ident">collect</span>())
-    }
-}
-
-<span class="kw">impl</span> <span class="ident">ProbabilityBinaryClassifier</span> <span class="kw">for</span> <span class="ident">IRLSLogisticRegression</span> {
-    <span class="kw">fn</span> <span class="ident">predict_probability</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">x</span>: <span class="ident">ArrayView2</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Array1</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="comment">// TODO: return an iterator so the consumer can map if necessary</span>
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">weights</span>) <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">weights</span> {
-            <span class="comment">// Estimate the probability for each sample, and return 1 if p &gt; 0.5, 0 otherwise.</span>
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">xw</span> <span class="op">=</span> <span class="ident">x</span>.<span class="ident">dot</span>(<span class="ident">weights</span>);
-            <span class="ident">xw</span>.<span class="ident">par_mapv_inplace</span>(<span class="ident">sigmoid</span>);
-            <span class="prelude-val">Ok</span>(<span class="ident">xw</span>)
-        } <span class="kw">else</span> {
-            <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="ident">UseBeforeFit</span>)
-        }
+        <span class="prelude-val">Ok</span>(<span class="ident">weights</span>)
     }
 }
 
 <span class="doccomment">/// A classifier implementing the logistic regression model. Logistic</span>
 <span class="doccomment">/// regression models can be used for binary classification problems and may</span>
 <span class="doccomment">/// be extended through multinomial logistic regression.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// **Important**: you need to choose the solver you want to use in order</span>
+<span class="doccomment">/// to use this model. See the &#39;Fitting&#39; section below for help.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// # Model</span>
 <span class="doccomment">/// This model is appropriate if you have a collection of samples `x`</span>
@@ -617,34 +661,47 @@
 <span class="doccomment">///</span>
 <span class="doccomment">/// Roughly speaking, the logistic regression model tries to fit a linear</span>
 <span class="doccomment">/// model to predict the probability of each class. As we require probability</span>
-<span class="doccomment">/// estimates to be in [0, 1], the linear model is used to predict the</span>
+<span class="doccomment">/// estimates to be in $[0, 1]$, the linear model is used to predict the</span>
 <span class="doccomment">/// *log-odds* instead.</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// The model is fit using *maximum likelihood estimation* to find the optimal</span>
-<span class="doccomment">/// weights. There is no closed form to find the maximum likelihood estimator</span>
-<span class="doccomment">/// weights so this is solved numerically using the BFGS optimiser from</span>
-<span class="doccomment">/// `argmin`, which is a quasi-Newton optimisation method using second-order</span>
-<span class="doccomment">/// derivatives.</span>
+<span class="doccomment">/// ## Fitting</span>
+<span class="doccomment">/// Multiple methods of fitting `LogisticRegression` are provided, so you can</span>
+<span class="doccomment">/// choose whichever one you prefer or performs best on your system. The</span>
+<span class="doccomment">/// current choices are:</span>
+<span class="doccomment">/// - [`BFGSSolver`]</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// Numerically obtains the weights using a quasi-Newton iterative algorithm,</span>
+<span class="doccomment">/// known as the Broyden–Fletcher–Goldfarb–Shanno (BFGS) algorithm.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// - [`IRLSSolver`]</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// Obtains weights using a procedure known as iteratively reweighted</span>
+<span class="doccomment">/// least squares, as given by Hastie et al.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// In general, [`IRLSSolver`] is slightly faster, but check this on your</span>
+<span class="doccomment">/// system as it may depend on the BLAS/LAPACK you link to.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// # Examples</span>
-<span class="doccomment">/// Fitting a logistic regression classifier and making a prediction.</span>
+<span class="doccomment">/// Fitting a logistic regression classifier and making a prediction, using the</span>
+<span class="doccomment">/// BFGS solver.</span>
 <span class="doccomment">/// ```no_run</span>
 <span class="doccomment">/// use ndarray::array;</span>
 <span class="doccomment">/// use ml_rs::classification::Classifier;</span>
-<span class="doccomment">/// use ml_rs::classification::linear::LogisticRegression;</span>
+<span class="doccomment">/// use ml_rs::classification::linear::{BFGSSolver, LogisticRegression};</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// let x = array![[1.0, 2.0, 3.0], [1.0, 4.0, 3.0]];</span>
 <span class="doccomment">/// let y = array![0, 1];</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// let mut clf = LogisticRegression::new();</span>
+<span class="doccomment">/// let solver = BFGSSolver::default();</span>
+<span class="doccomment">/// let mut clf = LogisticRegression::new(solver);</span>
 <span class="doccomment">/// clf.fit(x.view(), y.view()).unwrap();</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// let x_test = array![[1.0, 2.0, 3.0]];</span>
 <span class="doccomment">/// assert_eq!(clf.predict(x_test.view()).unwrap(), array![0]);</span>
 <span class="doccomment">/// ```</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">LogisticRegression</span> {
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">LogisticRegression</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">LogisticRegressionSolver</span><span class="op">&gt;</span> {
     <span class="ident">weights</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Array1</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="ident">solver</span>: <span class="ident">T</span>,
     <span class="doccomment">/// The maximum number of iterations of the BFGS algorithm to apply</span>
     <span class="doccomment">/// when fitting to the data. The default is 100. Larger values will</span>
     <span class="doccomment">/// tend to lead to better fit classifiers, but increase the time needed to</span>
@@ -712,59 +769,36 @@
     }
 }
 
-<span class="kw">impl</span> <span class="ident">LogisticRegression</span> {
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">LogisticRegressionSolver</span><span class="op">&gt;</span> <span class="ident">LogisticRegression</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
     <span class="doccomment">/// Creates a new `LogisticRegression` classifier which must be fit on the</span>
     <span class="doccomment">/// data in order to find suitable weights.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">LogisticRegression</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">solver</span>: <span class="ident">T</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">LogisticRegression</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
         <span class="ident">LogisticRegression</span> {
             <span class="ident">weights</span>: <span class="prelude-val">None</span>,
             <span class="ident">max_iter</span>: <span class="number">100</span>,
+            <span class="ident">solver</span>,
         }
     }
 }
 
-<span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">LogisticRegression</span> {
-    <span class="kw">fn</span> <span class="ident">default</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">LogisticRegression</span> {
-        <span class="self">Self</span>::<span class="ident">new</span>()
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">LogisticRegressionSolver</span> <span class="op">+</span> <span class="ident">Default</span><span class="op">&gt;</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">LogisticRegression</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">default</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">LogisticRegression</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="ident">solver</span> <span class="op">=</span> <span class="ident">T</span>::<span class="ident">default</span>();
+        <span class="self">Self</span>::<span class="ident">new</span>(<span class="ident">solver</span>)
     }
 }
 
-<span class="kw">impl</span> <span class="ident">Classifier</span> <span class="kw">for</span> <span class="ident">LogisticRegression</span> {
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">LogisticRegressionSolver</span><span class="op">&gt;</span> <span class="ident">Classifier</span> <span class="kw">for</span> <span class="ident">LogisticRegression</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
     <span class="kw">fn</span> <span class="ident">fit</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">x</span>: <span class="ident">ArrayView2</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>, <span class="ident">y</span>: <span class="ident">ArrayView1</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">if</span> <span class="ident">x</span>.<span class="ident">nrows</span>() <span class="op">!</span><span class="op">=</span> <span class="ident">y</span>.<span class="ident">len</span>() <span class="op">|</span><span class="op">|</span> <span class="op">!</span><span class="ident">labels_binary</span>(<span class="ident">y</span>) {
             <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="ident">InvalidTrainingData</span>);
         }
 
-        <span class="comment">// Map y to an Array&lt;f64&gt; for convenience when defining the log-</span>
-        <span class="comment">// likelihood and gradient functions, and define the optimisation</span>
-        <span class="comment">// problem.</span>
+        <span class="comment">// Map y to an Array&lt;f64&gt; for convenience in the fitting process.</span>
         <span class="kw">let</span> <span class="ident">train_y</span> <span class="op">=</span> <span class="ident">y</span>.<span class="ident">mapv</span>(<span class="op">|</span><span class="ident">x</span><span class="op">|</span> <span class="ident">x</span> <span class="kw">as</span> <span class="ident">f64</span>);
-        <span class="kw">let</span> <span class="ident">best_param</span>: <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Array1</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> <span class="op">=</span> {
-            <span class="kw">let</span> <span class="ident">cost</span> <span class="op">=</span> <span class="ident">LogisticRegressionProblem</span> {
-                <span class="ident">train_x</span>: <span class="ident">x</span>,
-                <span class="ident">train_y</span>: <span class="ident">train_y</span>.<span class="ident">view</span>(),
-            };
-
-            <span class="kw">let</span> <span class="ident">param_size</span> <span class="op">=</span> <span class="ident">x</span>.<span class="ident">ncols</span>();
-            <span class="comment">// Set up a gradient descent using More–Thuente line search.</span>
-            <span class="kw">let</span> <span class="ident">line_search</span> <span class="op">=</span> <span class="ident">MoreThuenteLineSearch</span>::<span class="ident">new</span>();
-            <span class="kw">let</span> <span class="ident">init_hessian</span> <span class="op">=</span> <span class="ident">Array2</span>::<span class="ident">eye</span>(<span class="ident">param_size</span>);
-            <span class="kw">let</span> <span class="ident">solver</span> <span class="op">=</span> <span class="ident">BFGS</span>::<span class="ident">new</span>(<span class="ident">init_hessian</span>, <span class="ident">line_search</span>);
-            <span class="comment">// Generate a random initial point in [-1, 1]^n and hope this is</span>
-            <span class="comment">// reasonable.</span>
-            <span class="kw">let</span> <span class="ident">x_0</span> <span class="op">=</span> <span class="ident">Array1</span>::<span class="ident">random</span>(<span class="ident">param_size</span>, <span class="ident">Uniform</span>::<span class="ident">new</span>(<span class="op">-</span><span class="number">1.0</span>, <span class="number">1.0</span>));
-            <span class="kw">let</span> <span class="ident">executor</span> <span class="op">=</span> <span class="ident">Executor</span>::<span class="ident">new</span>(<span class="ident">cost</span>, <span class="ident">solver</span>, <span class="ident">x_0</span>).<span class="ident">max_iters</span>(<span class="self">self</span>.<span class="ident">max_iter</span>);
-            <span class="comment">// Execute the optimiser and save the best weights found.</span>
-            <span class="ident">executor</span>
-                .<span class="ident">run</span>()
-                .<span class="ident">map</span>(<span class="op">|</span><span class="ident">result</span><span class="op">|</span> {
-                    <span class="kw">let</span> <span class="ident">state</span> <span class="op">=</span> <span class="ident">result</span>.<span class="ident">state</span>;
-                    <span class="ident">state</span>.<span class="ident">best_param</span>.<span class="ident">to_owned</span>()
-                })
-                .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">Error</span>::<span class="ident">OptimiserError</span>)
-        };
-
-        <span class="self">self</span>.<span class="ident">weights</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">best_param</span><span class="question-mark">?</span>);
+        <span class="comment">// Pass to internal solver and obtain best weights.</span>
+        <span class="kw">let</span> <span class="ident">best_param</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">solver</span>.<span class="ident">fit_weights</span>(<span class="ident">x</span>, <span class="ident">train_y</span>.<span class="ident">view</span>())<span class="question-mark">?</span>;
+        <span class="self">self</span>.<span class="ident">weights</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">best_param</span>);
         <span class="prelude-val">Ok</span>(())
     }
 
@@ -774,7 +808,7 @@
     }
 }
 
-<span class="kw">impl</span> <span class="ident">ProbabilityBinaryClassifier</span> <span class="kw">for</span> <span class="ident">LogisticRegression</span> {
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">LogisticRegressionSolver</span><span class="op">&gt;</span> <span class="ident">ProbabilityBinaryClassifier</span> <span class="kw">for</span> <span class="ident">LogisticRegression</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
     <span class="kw">fn</span> <span class="ident">predict_probability</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">x</span>: <span class="ident">ArrayView2</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Array1</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="comment">// TODO: return an iterator so the consumer can map if necessary</span>
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">weights</span>) <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">weights</span> {
@@ -797,14 +831,15 @@
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
 <span class="kw">mod</span> <span class="ident">test</span> {
     <span class="kw">use</span> <span class="kw">super</span>::<span class="kw">super</span>::{<span class="ident">Classifier</span>, <span class="ident">Error</span>};
-    <span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">IRLSLogisticRegression</span>, <span class="ident">LogisticRegression</span>};
+    <span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">BFGSSolver</span>, <span class="ident">IRLSSolver</span>, <span class="ident">LogisticRegression</span>};
     <span class="kw">use</span> <span class="ident">ndarray</span>::{<span class="ident">array</span>, <span class="ident">Array1</span>, <span class="ident">Array2</span>};
     <span class="kw">use</span> <span class="ident">ndarray_rand</span>::<span class="ident">rand_distr</span>::<span class="ident">Uniform</span>;
     <span class="kw">use</span> <span class="ident">ndarray_rand</span>::<span class="ident">RandomExt</span>;
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">test_unfit_logistic_regression</span>() {
-        <span class="kw">let</span> <span class="ident">clf</span> <span class="op">=</span> <span class="ident">LogisticRegression</span>::<span class="ident">new</span>();
+        <span class="kw">let</span> <span class="ident">solver</span> <span class="op">=</span> <span class="ident">BFGSSolver</span>::<span class="ident">default</span>();
+        <span class="kw">let</span> <span class="ident">clf</span> <span class="op">=</span> <span class="ident">LogisticRegression</span>::<span class="ident">new</span>(<span class="ident">solver</span>);
         <span class="kw">let</span> <span class="ident">x</span> <span class="op">=</span> <span class="macro">array</span><span class="macro">!</span>[[<span class="number">1.0</span>, <span class="number">2.0</span>], [<span class="number">3.0</span>, <span class="number">4.0</span>]];
         <span class="kw">match</span> <span class="ident">clf</span>.<span class="ident">predict</span>(<span class="ident">x</span>.<span class="ident">view</span>()) {
             <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="ident">UseBeforeFit</span>) <span class="op">=</span><span class="op">&gt;</span> (),
@@ -814,7 +849,8 @@
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">test_logistic_regression_different_sizes</span>() {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">clf</span> <span class="op">=</span> <span class="ident">LogisticRegression</span>::<span class="ident">new</span>();
+        <span class="kw">let</span> <span class="ident">solver</span> <span class="op">=</span> <span class="ident">BFGSSolver</span>::<span class="ident">default</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">clf</span> <span class="op">=</span> <span class="ident">LogisticRegression</span>::<span class="ident">new</span>(<span class="ident">solver</span>);
         <span class="kw">let</span> <span class="ident">x</span> <span class="op">=</span> <span class="macro">array</span><span class="macro">!</span>[[<span class="number">1.0</span>, <span class="number">2.0</span>], [<span class="number">3.0</span>, <span class="number">4.0</span>]];
         <span class="kw">let</span> <span class="ident">y</span> <span class="op">=</span> <span class="macro">array</span><span class="macro">!</span>[<span class="number">0</span>];
         <span class="kw">match</span> <span class="ident">clf</span>.<span class="ident">fit</span>(<span class="ident">x</span>.<span class="ident">view</span>(), <span class="ident">y</span>.<span class="ident">view</span>()) {
@@ -825,7 +861,8 @@
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">test_fit_logistic_regression</span>() {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">clf</span> <span class="op">=</span> <span class="ident">LogisticRegression</span>::<span class="ident">new</span>();
+        <span class="kw">let</span> <span class="ident">solver</span> <span class="op">=</span> <span class="ident">BFGSSolver</span>::<span class="ident">default</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">clf</span> <span class="op">=</span> <span class="ident">LogisticRegression</span>::<span class="ident">new</span>(<span class="ident">solver</span>);
         <span class="kw">let</span> <span class="ident">x</span> <span class="op">=</span> <span class="macro">array</span><span class="macro">!</span>[[<span class="number">1.0</span>, <span class="number">2.0</span>], [<span class="number">1.0</span>, <span class="number">3.0</span>], [<span class="number">3.0</span>, <span class="number">4.0</span>], [<span class="number">3.0</span>, <span class="number">5.0</span>]];
         <span class="kw">let</span> <span class="ident">y</span> <span class="op">=</span> <span class="macro">array</span><span class="macro">!</span>[<span class="number">0</span>, <span class="number">0</span>, <span class="number">1</span>, <span class="number">1</span>];
         <span class="ident">clf</span>.<span class="ident">fit</span>(<span class="ident">x</span>.<span class="ident">view</span>(), <span class="ident">y</span>.<span class="ident">view</span>()).<span class="ident">unwrap</span>();
@@ -834,7 +871,8 @@
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">test_fit_logistic_regression_irls</span>() {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">clf</span> <span class="op">=</span> <span class="ident">IRLSLogisticRegression</span>::<span class="ident">new</span>();
+        <span class="kw">let</span> <span class="ident">solver</span> <span class="op">=</span> <span class="ident">IRLSSolver</span>::<span class="ident">default</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">clf</span> <span class="op">=</span> <span class="ident">LogisticRegression</span>::<span class="ident">new</span>(<span class="ident">solver</span>);
         <span class="kw">let</span> <span class="ident">x</span> <span class="op">=</span> <span class="macro">array</span><span class="macro">!</span>[[<span class="number">1.0</span>, <span class="number">2.0</span>], [<span class="number">1.0</span>, <span class="number">3.0</span>], [<span class="number">3.0</span>, <span class="number">4.0</span>], [<span class="number">3.0</span>, <span class="number">5.0</span>]];
         <span class="kw">let</span> <span class="ident">y</span> <span class="op">=</span> <span class="macro">array</span><span class="macro">!</span>[<span class="number">0</span>, <span class="number">0</span>, <span class="number">1</span>, <span class="number">1</span>];
         <span class="ident">clf</span>.<span class="ident">fit</span>(<span class="ident">x</span>.<span class="ident">view</span>(), <span class="ident">y</span>.<span class="ident">view</span>()).<span class="ident">unwrap</span>();
@@ -843,7 +881,8 @@
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">test_logistic_regression_non_binary_labels</span>() {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">clf</span> <span class="op">=</span> <span class="ident">LogisticRegression</span>::<span class="ident">new</span>();
+        <span class="kw">let</span> <span class="ident">solver</span> <span class="op">=</span> <span class="ident">BFGSSolver</span>::<span class="ident">default</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">clf</span> <span class="op">=</span> <span class="ident">LogisticRegression</span>::<span class="ident">new</span>(<span class="ident">solver</span>);
         <span class="kw">let</span> <span class="ident">x</span> <span class="op">=</span> <span class="macro">array</span><span class="macro">!</span>[[<span class="number">1.0</span>, <span class="number">2.0</span>], [<span class="number">1.0</span>, <span class="number">3.0</span>], [<span class="number">3.0</span>, <span class="number">4.0</span>], [<span class="number">3.0</span>, <span class="number">5.0</span>]];
         <span class="kw">let</span> <span class="ident">y</span> <span class="op">=</span> <span class="macro">array</span><span class="macro">!</span>[<span class="number">0</span>, <span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>];
         <span class="kw">match</span> <span class="ident">clf</span>.<span class="ident">fit</span>(<span class="ident">x</span>.<span class="ident">view</span>(), <span class="ident">y</span>.<span class="ident">view</span>()) {
@@ -854,7 +893,8 @@
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">test_single_logistic_regression</span>() {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">clf</span> <span class="op">=</span> <span class="ident">LogisticRegression</span>::<span class="ident">new</span>();
+        <span class="kw">let</span> <span class="ident">solver</span> <span class="op">=</span> <span class="ident">BFGSSolver</span>::<span class="ident">default</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">clf</span> <span class="op">=</span> <span class="ident">LogisticRegression</span>::<span class="ident">new</span>(<span class="ident">solver</span>);
         <span class="kw">let</span> <span class="ident">x</span> <span class="op">=</span> <span class="macro">array</span><span class="macro">!</span>[[<span class="number">1.0</span>, <span class="number">2.0</span>, <span class="number">3.0</span>],];
         <span class="kw">let</span> <span class="ident">y</span> <span class="op">=</span> <span class="macro">array</span><span class="macro">!</span>[<span class="number">0</span>];
         <span class="ident">clf</span>.<span class="ident">fit</span>(<span class="ident">x</span>.<span class="ident">view</span>(), <span class="ident">y</span>.<span class="ident">view</span>()).<span class="ident">unwrap</span>();
@@ -863,7 +903,8 @@
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">test_fit_logistic_regression_random</span>() {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">clf</span> <span class="op">=</span> <span class="ident">LogisticRegression</span>::<span class="ident">new</span>();
+        <span class="kw">let</span> <span class="ident">solver</span> <span class="op">=</span> <span class="ident">BFGSSolver</span>::<span class="ident">default</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">clf</span> <span class="op">=</span> <span class="ident">LogisticRegression</span>::<span class="ident">new</span>(<span class="ident">solver</span>);
         <span class="kw">let</span> <span class="ident">n_rows</span> <span class="op">=</span> <span class="number">2000</span>;
         <span class="kw">let</span> <span class="ident">n_features</span> <span class="op">=</span> <span class="number">5</span>;
         <span class="kw">let</span> <span class="ident">x</span> <span class="op">=</span> <span class="ident">Array2</span>::<span class="ident">random</span>((<span class="ident">n_rows</span>, <span class="ident">n_features</span>), <span class="ident">Uniform</span>::<span class="ident">new</span>(<span class="op">-</span><span class="number">1.0</span>, <span class="number">1.0</span>));
@@ -873,7 +914,8 @@
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">test_fit_logistic_regression_random_large</span>() {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">clf</span> <span class="op">=</span> <span class="ident">LogisticRegression</span>::<span class="ident">new</span>();
+        <span class="kw">let</span> <span class="ident">solver</span> <span class="op">=</span> <span class="ident">BFGSSolver</span>::<span class="ident">default</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">clf</span> <span class="op">=</span> <span class="ident">LogisticRegression</span>::<span class="ident">new</span>(<span class="ident">solver</span>);
         <span class="kw">let</span> <span class="ident">n_rows</span> <span class="op">=</span> <span class="number">100000</span>;
         <span class="kw">let</span> <span class="ident">n_features</span> <span class="op">=</span> <span class="number">5</span>;
         <span class="kw">let</span> <span class="ident">x</span> <span class="op">=</span> <span class="ident">Array2</span>::<span class="ident">random</span>((<span class="ident">n_rows</span>, <span class="ident">n_features</span>), <span class="ident">Uniform</span>::<span class="ident">new</span>(<span class="op">-</span><span class="number">1.0</span>, <span class="number">1.0</span>));
@@ -883,7 +925,8 @@
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">test_fit_irls_logistic_regression_random_large</span>() {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">clf</span> <span class="op">=</span> <span class="ident">IRLSLogisticRegression</span>::<span class="ident">new</span>();
+        <span class="kw">let</span> <span class="ident">solver</span> <span class="op">=</span> <span class="ident">IRLSSolver</span>::<span class="ident">default</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">clf</span> <span class="op">=</span> <span class="ident">LogisticRegression</span>::<span class="ident">new</span>(<span class="ident">solver</span>);
         <span class="kw">let</span> <span class="ident">n_rows</span> <span class="op">=</span> <span class="number">100000</span>;
         <span class="kw">let</span> <span class="ident">n_features</span> <span class="op">=</span> <span class="number">5</span>;
         <span class="kw">let</span> <span class="ident">x</span> <span class="op">=</span> <span class="ident">Array2</span>::<span class="ident">random</span>((<span class="ident">n_rows</span>, <span class="ident">n_features</span>), <span class="ident">Uniform</span>::<span class="ident">new</span>(<span class="op">-</span><span class="number">1.0</span>, <span class="number">1.0</span>));
@@ -893,7 +936,8 @@
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">test_unfit_irls_logistic_regression</span>() {
-        <span class="kw">let</span> <span class="ident">clf</span> <span class="op">=</span> <span class="ident">IRLSLogisticRegression</span>::<span class="ident">new</span>();
+        <span class="kw">let</span> <span class="ident">solver</span> <span class="op">=</span> <span class="ident">IRLSSolver</span>::<span class="ident">default</span>();
+        <span class="kw">let</span> <span class="ident">clf</span> <span class="op">=</span> <span class="ident">LogisticRegression</span>::<span class="ident">new</span>(<span class="ident">solver</span>);
         <span class="kw">let</span> <span class="ident">x</span> <span class="op">=</span> <span class="macro">array</span><span class="macro">!</span>[[<span class="number">1.0</span>, <span class="number">2.0</span>], [<span class="number">3.0</span>, <span class="number">4.0</span>]];
         <span class="kw">match</span> <span class="ident">clf</span>.<span class="ident">predict</span>(<span class="ident">x</span>.<span class="ident">view</span>()) {
             <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="ident">UseBeforeFit</span>) <span class="op">=</span><span class="op">&gt;</span> (),

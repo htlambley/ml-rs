@@ -151,8 +151,8 @@
 <span class="doccomment">/// This method is appropriate when you wish to model your response variable $Y$</span>
 <span class="doccomment">/// as a linear combination of the features,</span>
 <span class="doccomment">/// $$\hat{Y} = \alpha_1 X_1 + \dots + \alpha_n X_n,$$</span>
-<span class="doccomment">/// based on the hypothesis that each randomly drawn training sample </span>
-<span class="doccomment">/// $(X_i, Y_i)$ is in fact of the form </span>
+<span class="doccomment">/// based on the hypothesis that each randomly drawn training sample</span>
+<span class="doccomment">/// $(X_i, Y_i)$ is in fact of the form</span>
 <span class="doccomment">/// $$Y_i = \alpha_1 X_1 + ... + \alpha_n X_n + \varepsilon_i,$$</span>
 <span class="doccomment">/// for some random noise $\varepsilon_i$.</span>
 <span class="doccomment">///</span>
@@ -162,7 +162,7 @@
 <span class="doccomment">/// and solving the least squares problem using the singular value</span>
 <span class="doccomment">/// decomposition of $X$.</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// This model does not currently support an intercept term. For now, you can </span>
+<span class="doccomment">/// This model does not currently support an intercept term. For now, you can</span>
 <span class="doccomment">/// add an additional feature to your data which is a constant 1, and this will</span>
 <span class="doccomment">/// allow the model to fit a suitable intercept term.</span>
 <span class="doccomment">///</span>
@@ -184,7 +184,7 @@
 }
 
 <span class="kw">impl</span> <span class="ident">LinearRegression</span> {
-    <span class="doccomment">/// Creates a new `LinearRegression` model ready to be fit to training </span>
+    <span class="doccomment">/// Creates a new `LinearRegression` model ready to be fit to training</span>
     <span class="doccomment">/// data.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">LinearRegression</span> {
         <span class="ident">LinearRegression</span> { <span class="ident">weights</span>: <span class="prelude-val">None</span> }

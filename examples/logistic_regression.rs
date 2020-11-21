@@ -1,4 +1,4 @@
-use ml_rs::classification::linear::LogisticRegression;
+use ml_rs::classification::linear::{BFGSSolver, LogisticRegression};
 use ml_rs::classification::{Classifier, ProbabilityBinaryClassifier};
 use ml_rs::metrics::accuracy_score;
 use ml_rs::preprocessing::CsvReader;
@@ -14,8 +14,12 @@ fn main() {
     let x = data.slice(s![.., 0..3]);
     let y = data.index_axis(Axis(1), 3).mapv(|x| x as usize);
 
-    // Initialise new LogisticRegression classifier and fit to data
-    let mut classifier = LogisticRegression::new();
+    // Initialise new LogisticRegression classifier and fit to data.
+    // The `LogisticRegression` classifier provides multiple internal solvers
+    // to choose from, as noted in the documentation. Generally `BFGSSolver`
+    // is a reasonable choice, and if you're happy with the defaults, can be
+    // set up as follows.
+    let mut classifier = LogisticRegression::<BFGSSolver>::default();
     // The classifier only needs an `ArrayView` as it does not consume the
     // training data, so we pass with .view()
     // This returns a result that you should check to ensure the fitting
