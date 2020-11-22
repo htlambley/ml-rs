@@ -1,3 +1,4 @@
+use super::MetricError;
 use crate::classification::labels_binary;
 use ndarray::ArrayView1;
 
@@ -32,28 +33,31 @@ use ndarray::ArrayView1;
 /// This also lies in $[0, 1]$ with 1.0 being the best possible score.
 ///
 /// # Returns
-/// A pair representing the precision and recall respectively. In the
-/// degenerate case that the classifier makes no positive predictions,
+/// If successful, a pair representing the precision and recall respectively.
+/// In the degenerate case that the classifier makes no positive predictions,
 /// the precision is undefined and `None` will be returned. Likewise,
 /// if there are no positive cases in the data, the recall is undefined
 /// and `None` will be returned.
+///
+/// If invalid input is passed, a suitable error is returned.
 pub fn precision_recall_score(
     y_true: ArrayView1<usize>,
     y_pred: ArrayView1<usize>,
-) -> (Option<f64>, Option<f64>) {
-    assert!(y_true.len() == y_pred.len(), "`precision_recall_score` called for label vectors of different lengths. Ensure that `y_true` and `y_pred` have the same length.");
-    assert!(
-        !y_true.is_empty(),
-        "`y_true` has no predictions. Ensure that `y_true` does not have length 0."
-    );
-    assert!(
-        labels_binary(y_true),
-        "`y_true` must be an array of binary labels (0 or 1)."
-    );
-    assert!(
-        labels_binary(y_pred),
-        "`y_pred` must be an array of binary labels (0 or 1)."
-    );
+) -> Result<(Option<f64>, Option<f64>), MetricError> {
+    let n_true = y_true.len();
+    let n_pred = y_pred.len();
+
+    if n_true != n_pred {
+        return Err(MetricError::PredictionLengthsDifferent { n_true, n_pred });
+    }
+
+    if n_true == 0 {
+        return Err(MetricError::NoPredictions);
+    }
+
+    if !labels_binary(y_true) || !labels_binary(y_pred) {
+        return Err(MetricError::NotBinary);
+    }
 
     // The number of cases that were correctly predicted to be positive
     let mut true_positives = 0;
@@ -80,11 +84,12 @@ pub fn precision_recall_score(
         None
     };
 
-    (precision, recall)
+    Ok((precision, recall))
 }
 
 #[cfg(test)]
 mod tests {
+    use super::super::MetricError;
     use super::precision_recall_score;
     use ndarray::array;
 
@@ -92,52 +97,59 @@ mod tests {
     fn test_precision_recall() {
         let y_true = array![1, 0, 1, 1, 0];
         let y_pred = array![1, 0, 1, 1, 1];
-        let (precision, recall) = precision_recall_score(y_true.view(), y_pred.view());
+        let (precision, recall) = precision_recall_score(y_true.view(), y_pred.view()).unwrap();
         assert_eq!(precision, Some(0.75));
         assert_eq!(recall, Some(1.0));
     }
 
     #[test]
-    #[should_panic(
-        expected = "`precision_recall_score` called for label vectors of different lengths. Ensure that `y_true` and `y_pred` have the same length."
-    )]
     fn test_precision_recall_differing_lengths() {
         let y_true = array![1, 0, 1, 1, 0, 1];
         let y_pred = array![1, 0, 1, 1, 1];
-        precision_recall_score(y_true.view(), y_pred.view());
+        match precision_recall_score(y_true.view(), y_pred.view()) {
+            Err(MetricError::PredictionLengthsDifferent { n_true, n_pred }) => {
+                assert_eq!(n_true, 6);
+                assert_eq!(n_pred, 5);
+            }
+            _ => panic!("Incorrect error returned"),
+        }
     }
 
     #[test]
-    #[should_panic(
-        expected = "`y_true` has no predictions. Ensure that `y_true` does not have length 0."
-    )]
     fn test_precision_recall_zero_length() {
         let y_true = array![];
         let y_pred = array![];
-        precision_recall_score(y_true.view(), y_pred.view());
+        match precision_recall_score(y_true.view(), y_pred.view()) {
+            Err(MetricError::NoPredictions) => {}
+            _ => panic!("Incorrect error returned"),
+        }
     }
 
     #[test]
-    #[should_panic(expected = "`y_true` must be an array of binary labels (0 or 1).")]
     fn test_precision_recall_nonbinary_true() {
         let y_true = array![1, 0, 1, 1, 2];
         let y_pred = array![1, 0, 1, 1, 1];
-        precision_recall_score(y_true.view(), y_pred.view());
+        match precision_recall_score(y_true.view(), y_pred.view()) {
+            Err(MetricError::NotBinary) => {}
+            _ => panic!("Incorrect error returned"),
+        }
     }
 
     #[test]
-    #[should_panic(expected = "`y_pred` must be an array of binary labels (0 or 1).")]
     fn test_precision_recall_nonbinary_pred() {
         let y_true = array![1, 0, 1, 1, 1];
         let y_pred = array![1, 0, 1, 1, 2];
-        precision_recall_score(y_true.view(), y_pred.view());
+        match precision_recall_score(y_true.view(), y_pred.view()) {
+            Err(MetricError::NotBinary) => {}
+            _ => panic!("Incorrect error returned"),
+        }
     }
 
     #[test]
     fn test_precision_recall_zero_true_preds() {
         let y_true = array![1, 0, 1, 1, 1];
         let y_pred = array![0, 0, 0, 0, 0];
-        let (precision, recall) = precision_recall_score(y_true.view(), y_pred.view());
+        let (precision, recall) = precision_recall_score(y_true.view(), y_pred.view()).unwrap();
         assert_eq!(precision, None);
         assert_eq!(recall, Some(0.0));
     }
@@ -146,7 +158,7 @@ mod tests {
     fn test_precision_recall_zero_true() {
         let y_true = array![0, 0, 0, 0, 0];
         let y_pred = array![0, 0, 0, 0, 1];
-        let (precision, recall) = precision_recall_score(y_true.view(), y_pred.view());
+        let (precision, recall) = precision_recall_score(y_true.view(), y_pred.view()).unwrap();
         assert_eq!(precision, Some(0.0));
         assert_eq!(recall, None);
     }
@@ -155,7 +167,7 @@ mod tests {
     fn test_precision_recall_half() {
         let y_true = array![0, 1, 0, 1];
         let y_pred = array![0, 1, 1, 0];
-        let (precision, recall) = precision_recall_score(y_true.view(), y_pred.view());
+        let (precision, recall) = precision_recall_score(y_true.view(), y_pred.view()).unwrap();
         assert_eq!(precision, Some(0.5));
         assert_eq!(recall, Some(0.5));
     }

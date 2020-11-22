@@ -36,8 +36,8 @@ fn main() {
     let y_true = array![0];
 
     // We can measure the accuracy of our predictions using accuracy_score,
-    // which returns a value in [0, 1]
-    let accuracy = accuracy_score(y_true.view(), y_pred.view());
+    // which returns a value in [0, 1].
+    let accuracy = accuracy_score(y_true.view(), y_pred.view()).unwrap();
     assert_eq!(accuracy, 1.0);
 
     // Logistic regression can also return calibrated probability estimates

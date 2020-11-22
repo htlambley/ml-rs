@@ -75,7 +75,7 @@
 //! use ml_rs::metrics::accuracy_score;
 //! // We own `y_pred`, so we need to return a view, which means we
 //! // don't consume it when calculating accuracy.
-//! let train_accuracy = accuracy_score(y, y_pred.view());
+//! let train_accuracy = accuracy_score(y, y_pred.view()).unwrap();
 //! println!("Training set accuracy: {}%", train_accuracy * 100.0);
 //! ```
 //! Classification works very similarly to regression: for an example,
