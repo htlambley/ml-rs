@@ -42,6 +42,16 @@ impl Default for BFGSSolver {
     }
 }
 
+impl BFGSSolver {
+    /// Creates a new [`BFGSSolver`] with the given maximum number of 
+    /// iterations.
+    pub fn with_max_iter(max_iter: u64) -> BFGSSolver {
+        BFGSSolver {
+            max_iter
+        }
+    }
+}
+
 impl LogisticRegressionSolver for BFGSSolver {
     fn fit_weights(&self, x: ArrayView2<f64>, y: ArrayView1<f64>) -> Result<Array1<f64>, Error> {
         let cost = LogisticRegressionProblem {
@@ -115,10 +125,21 @@ impl Default for IRLSSolver {
     }
 }
 
+impl IRLSSolver {
+    /// Creates a new [`IRLSSolver`] with the given maximum number of 
+    /// iterations.
+    pub fn with_max_iter(max_iter: usize) -> IRLSSolver {
+        IRLSSolver {
+            max_iter
+        }
+    }
+}
+
 impl LogisticRegressionSolver for IRLSSolver {
     fn fit_weights(&self, x: ArrayView2<f64>, y: ArrayView1<f64>) -> Result<Array1<f64>, Error> {
         let mut weights: Array1<f64> = Array1::zeros(x.ncols());
         for _ in 0..self.max_iter {
+            println!("T");
             let xw: Array1<f64> = x.dot(&weights);
             let mut p = xw.clone();
             p.par_mapv_inplace(sigmoid);
@@ -180,6 +201,15 @@ impl LogisticRegressionSolver for IRLSSolver {
 /// estimates to be in $[0, 1]$, the linear model is used to predict the
 /// *log-odds* instead.
 ///
+/// ## Interpretation as a neural network
+/// In the language of neural networks, a binary logistic regression classifier
+/// is a single-neuron network where the neuron uses sigmoid activation.
+/// The model is trained by minimising the cross-entropy (which can be shown
+/// to be equivalent to maximising the log-likelihood). The ideas underlying
+/// logistic regression are much older than those in modern neural network
+/// theory, and the fitting process would typically be restrained to some
+/// form of gradient descent in the neural network context.
+///
 /// ## Fitting
 /// Multiple methods of fitting `LogisticRegression` are provided, so you can
 /// choose whichever one you prefer or performs best on your system. The
@@ -218,11 +248,14 @@ impl LogisticRegressionSolver for IRLSSolver {
 pub struct LogisticRegression<T: LogisticRegressionSolver> {
     weights: Option<Array1<f64>>,
     solver: T,
-    /// The maximum number of iterations of the BFGS algorithm to apply
-    /// when fitting to the data. The default is 100. Larger values will
-    /// tend to lead to better fit classifiers, but increase the time needed to
-    /// train.
-    pub max_iter: u64,
+    /// The decision threshold used to classify a sample as negative (class 0)
+    /// or positive (class 1). If the probability estimate from
+    /// `predict_probability` is greater than `threshold`, `predict` will
+    /// output class 1 for that sample.
+    ///
+    /// The default is 0.5, which classifies a sample as class 1 if the
+    /// probability that it is class 1 is greater than a half.
+    pub threshold: f64,
 }
 
 struct LogisticRegressionProblem<'a, 'b> {
@@ -291,7 +324,7 @@ impl<T: LogisticRegressionSolver> LogisticRegression<T> {
     pub fn new(solver: T) -> LogisticRegression<T> {
         LogisticRegression {
             weights: None,
-            max_iter: 100,
+            threshold: 0.5,
             solver,
         }
     }
@@ -320,7 +353,12 @@ impl<T: LogisticRegressionSolver> Classifier for LogisticRegression<T> {
 
     fn predict(&self, x: ArrayView2<f64>) -> Result<Array1<usize>, Error> {
         let probabilties = self.predict_probability(x)?;
-        Ok(probabilties.iter().map(|x| (x.round() as usize)).collect())
+        // Using the probability estimates, choose class 1 if the estimate
+        // is greater than `self.threshold`.
+        Ok(probabilties
+            .iter()
+            .map(|x| if *x > self.threshold { 1 } else { 0 })
+            .collect())
     }
 }
 
@@ -328,7 +366,7 @@ impl<T: LogisticRegressionSolver> ProbabilityBinaryClassifier for LogisticRegres
     fn predict_probability(&self, x: ArrayView2<f64>) -> Result<Array1<f64>, Error> {
         // TODO: return an iterator so the consumer can map if necessary
         if let Some(weights) = &self.weights {
-            // Estimate the probability for each sample, and return 1 if p > 0.5, 0 otherwise.
+            // Estimate the probability for each sample.
             let mut xw = x.dot(weights);
             xw.par_mapv_inplace(sigmoid);
             Ok(xw)

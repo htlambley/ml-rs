@@ -184,6 +184,10 @@
 /// York, NY, 1999, 1st ed.
 pub mod classification;
 
+/// Prepared datasets that can be used to quickly experiment with different
+/// models and pipelines.
+pub mod datasets;
+
 /// A collection of metrics to measure the performance of classification
 /// and regression models.
 ///
