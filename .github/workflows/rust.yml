@@ -23,4 +23,5 @@ jobs:
     - name: Run tests
       run: cargo test --verbose --release
     - name: Test examples
-      run: cargo run --example logistic_regression
+      run: cargo run --example logistic_regression_csv
+      run: cargo run --example logistic_regression_dataset
